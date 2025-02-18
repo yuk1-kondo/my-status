@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>現在の状態</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        async function loadStatus() {
+            const response = await fetch('location.json');
+            const data = await response.json();
+            document.getElementById('status').textContent = data.status;
+            document.getElementById('lastUpdated').textContent = data.last_updated;
+        }
+        window.onload = loadStatus;
+    </script>
+</head>
+<body>
+    <h1>現在の状態</h1>
+    <p><strong>場所・状態:</strong> <span id="status">読み込み中...</span></p>
+    <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
+</body>
+</html>
