@@ -13,27 +13,46 @@
   <script src="https://unpkg.com/framer-motion@4.1.17/dist/framer-motion.umd.js"></script>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- lucide-react (UMD版) -->
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide-react.js"></script>
 </head>
 <body>
   <div id="root"></div>
-
-  <!-- 以下、Babel で変換する JSX スクリプト -->
   <script type="text/babel">
-    // React と Hooks を取得
     const { useState, useEffect } = React;
-    // Framer Motion のモジュールは window.framerMotion 経由で取得
     const { motion, AnimatePresence } = window.framerMotion;
-    // lucide-react の UMD版は window.lucideReact 経由で取得
-    const { MapPin, Clock, RefreshCw } = window.lucideReact;
-
+    
+    // インラインSVGでアイコンを定義
+    function MapPinIcon() {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2c4.418 0 8 3.582 8 8 0 5.25-8 12-8 12S4 15.25 4 10c0-4.418 3.582-8 8-8z" />
+        </svg>
+      );
+    }
+    
+    function ClockIcon() {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+        </svg>
+      );
+    }
+    
+    function RefreshIcon({ className = "" }) {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className + " w-6 h-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582M20 20v-5h-.581M4 15a8 8 0 018-8c1.657 0 3.18.505 4.434 1.366M20 9a8 8 0 00-8-8c-1.657 0-3.18.505-4.434 1.366" />
+        </svg>
+      );
+    }
+    
     function StatusPage() {
       const [status, setStatus] = useState("読み込み中...");
       const [lastUpdated, setLastUpdated] = useState("読み込み中...");
       const [isLoading, setIsLoading] = useState(false);
-
-      // GitHub Pages 上の location.json からデータを取得
+    
+      // location.jsonから最新状態を取得
       const fetchStatus = async () => {
         setIsLoading(true);
         try {
@@ -49,12 +68,11 @@
           setIsLoading(false);
         }
       };
-
-      // 初回ロード時に状態を取得
+    
       useEffect(() => {
         fetchStatus();
       }, []);
-
+    
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4 overflow-hidden relative">
           <motion.div
@@ -74,7 +92,7 @@
                   transition={{ duration: 0.3 }}
                   className="flex items-center space-x-3"
                 >
-                  <MapPin className="text-blue-500" />
+                  <MapPinIcon />
                   <div>
                     <p className="text-sm text-gray-500">場所・状態</p>
                     <p className="text-lg font-semibold text-gray-800">{status}</p>
@@ -82,7 +100,7 @@
                 </motion.div>
               </AnimatePresence>
               <div className="flex items-center space-x-3">
-                <Clock className="text-blue-500" />
+                <ClockIcon />
                 <div>
                   <p className="text-sm text-gray-500">最終更新</p>
                   <p className="text-lg font-semibold text-gray-800">{lastUpdated}</p>
@@ -97,10 +115,10 @@
               className="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out flex items-center justify-center"
             >
               {isLoading ? (
-                <RefreshCw className="animate-spin" />
+                <RefreshIcon className="animate-spin" />
               ) : (
                 <>
-                  <RefreshCw className="mr-2" />
+                  <RefreshIcon className="mr-2" />
                   更新
                 </>
               )}
@@ -109,7 +127,7 @@
         </div>
       );
     }
-
+    
     ReactDOM.render(<StatusPage />, document.getElementById("root"));
   </script>
 </body>
