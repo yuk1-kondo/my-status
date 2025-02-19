@@ -4,6 +4,10 @@ body {
     padding: 0;
     font-family: sans-serif;
     background-color: #f8fafc; /* 薄いグレー背景 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
 /* 画面中央に配置 */
@@ -12,33 +16,52 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    width: 100%;
+    padding: 20px;
 }
 
 /* カード風デザイン */
 .card {
     background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
     padding: 2rem;
-    max-width: 400px;
-    width: 90%;
     text-align: center;
+    width: 90%;
+    max-width: 600px; /* PCでは少し大きめに */
 }
 
 /* タイトル */
 .card h1 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+    font-size: 2rem; /* タイトルを大きく */
+    margin-bottom: 1.5rem;
     color: #333;
 }
 
 /* 本文 */
 .card p {
-    margin: 0.5rem 0;
+    margin: 1rem 0;
     color: #555;
+    font-size: 1.2rem; /* フォントサイズ拡大 */
 }
 
 .card strong {
     color: #333;
+    font-size: 1.3rem;
+}
+
+/* 📱 スマホ用調整 */
+@media (max-width: 768px) {
+    .card {
+        padding: 1.5rem;
+        max-width: 90%; /* スマホでは少しコンパクトに */
+    }
+
+    .card h1 {
+        font-size: 1.7rem;
+    }
+
+    .card p {
+        font-size: 1.1rem;
+    }
 }
