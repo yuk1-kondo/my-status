@@ -36,8 +36,8 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             padding: 3rem;
             text-align: center;
-            width: 80%;
-            max-width: 600px; /* PCでは適度な大きさに */
+            width: 90%;
+            max-width: 500px; /* PCでも適度な大きさに */
             transform: scale(1.05);
             transition: transform 0.3s ease-in-out;
         }
@@ -75,14 +75,17 @@
                 align-items: center;
                 height: 100vh;
                 overflow: hidden;
+                padding: 0;
             }
             .container {
+                width: 100%;
                 height: auto;
                 padding: 10px;
             }
             .card {
-                padding: 2rem;
-                max-width: 90%;
+                padding: 1.5rem;
+                width: 95%;
+                max-width: 400px;
             }
 
             .card h1 {
