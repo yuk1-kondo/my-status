@@ -1,67 +1,94 @@
-/* ページ全体のスタイル */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: sans-serif;
-    background-color: #f8fafc; /* 薄いグレー背景 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ダイナミックカードデザイン</title>
+    <style>
+        /* ページ全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            background-color: #f8fafc; /* 薄いグレー背景 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-/* 画面中央に配置 */
-.container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    padding: 20px;
-}
+        /* 画面中央に配置 */
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
+        }
 
-/* カード風デザイン */
-.card {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-    padding: 2rem;
-    text-align: center;
-    width: 90%;
-    max-width: 600px; /* PCでは少し大きめに */
-}
+        /* カード風デザイン */
+        .card {
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 3rem;
+            text-align: center;
+            width: 90%;
+            max-width: 800px; /* PCではさらに大きめに */
+            transform: scale(1.05);
+            transition: transform 0.3s ease-in-out;
+        }
 
-/* タイトル */
-.card h1 {
-    font-size: 2rem; /* タイトルを大きく */
-    margin-bottom: 1.5rem;
-    color: #333;
-}
+        .card:hover {
+            transform: scale(1.1);
+        }
 
-/* 本文 */
-.card p {
-    margin: 1rem 0;
-    color: #555;
-    font-size: 1.2rem; /* フォントサイズ拡大 */
-}
+        /* タイトル */
+        .card h1 {
+            font-size: 3rem; /* タイトルを大きく */
+            margin-bottom: 2rem;
+            color: #222;
+            font-weight: bold;
+        }
 
-.card strong {
-    color: #333;
-    font-size: 1.3rem;
-}
+        /* 本文 */
+        .card p {
+            margin: 1.5rem 0;
+            color: #444;
+            font-size: 1.5rem; /* フォントサイズ拡大 */
+            line-height: 1.6;
+        }
 
-/* 📱 スマホ用調整 */
-@media (max-width: 768px) {
-    .card {
-        padding: 1.5rem;
-        max-width: 90%; /* スマホでは少しコンパクトに */
-    }
+        .card strong {
+            color: #222;
+            font-size: 1.8rem;
+        }
 
-    .card h1 {
-        font-size: 1.7rem;
-    }
+        /* 📱 スマホ用調整 */
+        @media (max-width: 768px) {
+            .card {
+                padding: 2rem;
+                max-width: 95%;
+            }
 
-    .card p {
-        font-size: 1.1rem;
-    }
-}
+            .card h1 {
+                font-size: 2.5rem;
+            }
+
+            .card p {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>ダイナミックタイトル</h1>
+            <p>これはインパクトのあるカードデザインのサンプルです。</p>
+            <p><strong>強調テキスト</strong>もより視覚的に目立ちます。</p>
+        </div>
+    </div>
+</body>
+</html>
