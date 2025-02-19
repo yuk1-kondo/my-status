@@ -34,10 +34,10 @@
             background-color: #fff;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            padding: 3rem;
+            padding: 2.5rem;
             text-align: center;
-            width: 90%;
-            max-width: 500px; /* PCでも適度な大きさに */
+            width: 80%;
+            max-width: 450px; /* PCでも適度な大きさに */
             transform: scale(1.05);
             transition: transform 0.3s ease-in-out;
         }
@@ -48,8 +48,8 @@
 
         /* タイトル */
         .card h1 {
-            font-size: 2.5rem; /* タイトルを適度な大きさに */
-            margin-bottom: 1.5rem;
+            font-size: 2.2rem; /* タイトルを適度な大きさに */
+            margin-bottom: 1.2rem;
             color: #222;
             font-weight: bold;
         }
@@ -58,13 +58,13 @@
         .card p {
             margin: 1rem 0;
             color: #444;
-            font-size: 1.3rem; /* フォントサイズ調整 */
+            font-size: 1.2rem; /* フォントサイズ調整 */
             line-height: 1.5;
         }
 
         .card strong {
             color: #222;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
         }
 
         /* 📱 スマホ用調整 */
@@ -84,16 +84,16 @@
             }
             .card {
                 padding: 1.5rem;
-                width: 95%;
-                max-width: 400px;
+                width: 85%;
+                max-width: 350px;
             }
 
             .card h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
 
             .card p {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
         }
     </style>
