@@ -3,25 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>現在地通知ページ</title>
+    <title>現在の状態</title>
     <link rel="stylesheet" href="style.css">
     <script>
-        async function loadLocation() {
+        async function loadStatus() {
             const response = await fetch('location.json');
             const data = await response.json();
-            document.getElementById('location').textContent = data.location;
-            document.getElementById('latitude').textContent = data.latitude;
-            document.getElementById('longitude').textContent = data.longitude;
+            document.getElementById('status').textContent = data.status;
             document.getElementById('lastUpdated').textContent = data.last_updated;
         }
-        window.onload = loadLocation;
+        window.onload = loadStatus;
     </script>
 </head>
 <body>
-    <h1>現在地通知ページ</h1>
-    <p><strong>場所:</strong> <span id="location">読み込み中...</span></p>
-    <p><strong>緯度:</strong> <span id="latitude">読み込み中...</span></p>
-    <p><strong>経度:</strong> <span id="longitude">読み込み中...</span></p>
+    <h1>現在の状態</h1>
+    <p><strong>場所・状態:</strong> <span id="status">読み込み中...</span></p>
     <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
 </body>
 </html>
