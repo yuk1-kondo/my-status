@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
   <title>こんちゃんイマドコシューティング</title>
   <style>
-    /* 背景はホワイト */
     html, body {
       margin: 0;
       padding: 0;
@@ -22,14 +21,14 @@
       box-sizing: border-box;
     }
 
-    /* キャンバスはデバイス判定によりサイズ変更 (script.jsで制御) */
+    /* キャンバスサイズはPC/スマホで変更 (script.js で制御) */
     canvas {
       background: #f2f2f2; /* 薄いグレー */
       display: block;
       touch-action: none; /* スマホのズーム・スクロール防止 */
     }
 
-    /* スタート時のオーバーレイ */
+    /* スタート用オーバーレイ */
     #overlay {
       position: fixed;
       top: 0; left: 0;
@@ -55,7 +54,6 @@
       border-radius: 6px;
     }
 
-    /* 説明文 */
     .instructions {
       text-align: left;
       max-width: 600px;
@@ -99,9 +97,11 @@
       <ul>
         <li>【スマホ】キャンバス上部80％をタップで弾を発射、下部20％で左右移動。</li>
         <li>【PC】←→キーで移動、スペース/Enterで弾を発射。</li>
-        <li>黒い四角が敵（当たると+10点）。プレイヤー三角形に衝突するとゲームオーバー。</li>
-        <li>オレンジの丸は撃つと-5点。</li>
-        <li>スコアが50点に到達するとクリア！</li>
+        <li>ダークグレー四角を倒すと +10点、オレンジ丸を倒すと -5点。</li>
+        <li>新たに追加されたジグザグ敵（「zigzag」）は HP=15 で、  
+          倒すと -10点、衝突すると -10点 です。  
+          しかも出現頻度高めで、左右にジグザグ移動します！</li>
+        <li>合計スコアが 200点 でクリア！</li>
       </ul>
       <p>頑張ってください！</p>
     </div>
