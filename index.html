@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <!-- maximum-scale=1.0 と user-scalable=no でスマホのズームを防止 -->
+  <!-- スマホのズームを防止 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>こんちゃんイマドコシューティング</title>
   <style>
@@ -18,100 +18,47 @@
       background: black; 
       display: block; 
       margin: auto; 
-      touch-action: none; /* スマホでの拡大・スクロール防止 */
+      touch-action: none; /* ズーム・スクロール防止 */
     }
-    .controls { 
-      position: fixed; 
-      bottom: 10px; 
-      left: 50%; 
-      transform: translateX(-50%);
-      display: flex; 
-      gap: 10px; 
-    }
-    .button { 
-      width: 60px; 
-      height: 60px; 
-      background: white; 
-      color: black; 
-      font-size: 24px; 
-      border: none; 
-      border-radius: 50%; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-    }
-
-    /* 「イマドコ」カードは初期状態では非表示 */
-    #locationCard {
-      display: none;
-      background: white;
-      color: black;
-      padding: 20px;
-      margin-top: 20px;
-      border-radius: 10px;
-      width: 80%;
-      max-width: 400px;
-      margin: auto; /* 中央寄せ */
-    }
-
-    /* スタート／リスタート用オーバーレイ */
+    /* オーバーレイは初期状態で画面全体を覆む */
     #overlay {
       position: fixed;
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.9);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 10;
+      padding: 20px;
+      box-sizing: border-box;
     }
     #overlay button {
       padding: 10px 20px;
       font-size: 24px;
       cursor: pointer;
+      margin-top: 20px;
     }
-
-    /* ゲーム説明（任意） */
-    .description {
-      margin: 10px auto;
-      max-width: 600px;
-      padding: 0 10px;
+    /* 説明文 */
+    .instructions {
       text-align: left;
+      max-width: 600px;
+      margin: 0 auto;
       line-height: 1.6;
+      font-size: 18px;
     }
-    .description h2 {
-      margin-top: 0;
-    }
+    /* PC用タッチボタンは削除するので、ここは不要（スマホ用はキャンバスで制御） */
   </style>
 </head>
 <body>
   <h1>こんちゃんイマドコシューティング</h1>
-
-  <!-- ゲーム説明 -->
-  <div class="description">
-    <h2>ゲームの遊び方</h2>
-    <ul>
-      <li>左右キー（または下のボタン）で移動</li>
-      <li>スペースキーまたは上ボタンで弾を発射</li>
-      <li>敵を倒すとスコアが上がり、スコア10点でクリア！</li>
-    </ul>
-    <p>頑張ってください！</p>
-  </div>
-
   <!-- ゲームキャンバス -->
   <canvas id="gameCanvas"></canvas>
 
-  <!-- スマホ用仮想ボタン（PCでは非表示） -->
-  <div id="controls" class="controls">
-    <button id="leftBtn" class="button">◀</button>
-    <button id="shootBtn" class="button">🔺</button>
-    <button id="rightBtn" class="button">▶</button>
-  </div>
-
   <!-- クリア後に表示する「イマドコ」カード -->
-  <div id="locationCard">
+  <div id="locationCard" style="display:none;">
     <div class="card">
       <h1>こんちゃんイマドコ</h1>
       <p><strong>イマココ:</strong> <span id="status">読み込み中...</span></p>
@@ -119,12 +66,23 @@
     </div>
   </div>
 
-  <!-- スタート／リスタートオーバーレイ -->
+  <!-- スタート用オーバーレイ（説明文とスタートボタン） -->
   <div id="overlay">
+    <div class="instructions">
+      <h2>ゲームの遊び方</h2>
+      <ul>
+        <li>【スマホの場合】画面の左半分をタッチで左へ、右半分で右へ移動します。</li>
+        <li>タップ（指をすぐ離す）すると弾が発射されます。</li>
+        <li>敵（赤い四角）は、プレイヤー本体（三角形）の内部に衝突したらゲームオーバー。</li>
+        <li>黄色い丸は撃つとスコアが-5されます。</li>
+        <li>敵を倒すとスコアが上がり、スコア50点でクリアです。</li>
+      </ul>
+      <p>頑張ってください！</p>
+    </div>
     <button id="startBtn">Start Game</button>
   </div>
 
-  <!-- defer 属性付きでスクリプト読み込み -->
+  <!-- defer属性付きでスクリプト読み込み -->
   <script src="script.js" defer></script>
 </body>
 </html>
