@@ -1,13 +1,12 @@
-// DOM の読み込みが完了してから初期化
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded. Starting game.");
 
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
 
-  // Canvas サイズの設定（スマホ・PCどちらにも対応）
-  canvas.width = window.innerWidth * 0.9;
-  canvas.height = window.innerHeight * 0.7;
+  // 画面サイズは、PCやスマホに応じて、最大600px × 400pxに制限
+  canvas.width = Math.min(window.innerWidth * 0.9, 600);
+  canvas.height = Math.min(window.innerHeight * 0.7, 400);
 
   // プレイヤー設定
   const player = {
@@ -26,40 +25,47 @@ document.addEventListener("DOMContentLoaded", () => {
   let gameClear = false;
   const targetScore = 100; // スコア100点でゲームクリア
 
-  // 「イマココ」エリアを確実に非表示にする
+  // 「イマココ」エリアは初期状態で非表示（index.htmlでも指定）
   document.getElementById("locationContainer").style.display = "none";
 
-  // タッチ操作（スマホ用）
-  const leftBtn = document.getElementById("leftBtn");
-  const rightBtn = document.getElementById("rightBtn");
-  const shootBtn = document.getElementById("shootBtn");
+  // 機種判別：スマホかどうかを判定
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-  leftBtn.addEventListener("touchstart", () => player.dx = -player.speed);
-  rightBtn.addEventListener("touchstart", () => player.dx = player.speed);
-  shootBtn.addEventListener("touchstart", shoot);
-  document.querySelectorAll(".button").forEach(button => {
-    button.addEventListener("touchend", () => player.dx = 0);
-  });
+  // PCの場合、タッチ用コントロールは非表示にする
+  if (!isMobile) {
+    document.getElementById("controls").style.display = "none";
+  } else {
+    // スマホの場合、タッチイベントを設定
+    const leftBtn = document.getElementById("leftBtn");
+    const rightBtn = document.getElementById("rightBtn");
+    const shootBtn = document.getElementById("shootBtn");
 
-  // キーボード操作
+    leftBtn.addEventListener("touchstart", () => player.dx = -player.speed);
+    rightBtn.addEventListener("touchstart", () => player.dx = player.speed);
+    shootBtn.addEventListener("touchstart", shoot);
+    document.querySelectorAll(".button").forEach(button => {
+      button.addEventListener("touchend", () => player.dx = 0);
+    });
+  }
+
+  // PC向けのキーボード操作
   document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") player.dx = -player.speed;
     if (e.key === "ArrowRight") player.dx = player.speed;
-    if (e.key === " ") shoot();
+    if (e.key === " " || e.key === "Enter") shoot();
   });
-
   document.addEventListener("keyup", (e) => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
   });
 
-  // 弾発射
+  // 弾を発射（最大5発）
   function shoot() {
-    if (bullets.length < 5) { // 最大5発まで
+    if (bullets.length < 5) {
       bullets.push({ x: player.x + player.width / 2, y: player.y, speed: 4 });
     }
   }
 
-  // 敵生成（難易度を簡単にするためゆっくり）
+  // 敵を生成（難易度は簡単にするため、ゆっくり移動）
   function spawnEnemy() {
     if (!gameOver && !gameClear) {
       const x = Math.random() * (canvas.width - 20);
@@ -76,19 +82,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (player.x < 0) player.x = 0;
     if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-    // 弾の移動
+    // 弾の更新
     bullets.forEach((bullet, index) => {
       bullet.y -= bullet.speed;
       if (bullet.y < 0) bullets.splice(index, 1);
     });
 
-    // 敵の移動
+    // 敵の更新
     enemies.forEach((enemy, index) => {
       enemy.y += enemy.speed;
       if (enemy.y > canvas.height) gameOver = true;
     });
 
-    // 衝突判定（弾と敵）
+    // 衝突判定：弾と敵
     bullets.forEach((bullet, bIndex) => {
       enemies.forEach((enemy, eIndex) => {
         if (
@@ -113,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
     draw();
   }
 
-  // 「イマココ」情報を取得＆表示（ゲームクリア時）
+  // ゲームクリア時に「イマココ」を取得＆表示する
   async function showLocation() {
     try {
       const response = await fetch("location.json?nocache=" + Date.now());
@@ -121,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       document.getElementById("status").textContent = data.status;
       document.getElementById("lastUpdated").textContent = new Date().toLocaleString("ja-JP");
-      // 1秒後に表示
+      // 1秒後に「イマココ」表示エリアを表示
       setTimeout(() => {
         document.getElementById("locationContainer").style.display = "block";
       }, 1000);
@@ -135,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // プレイヤー（シアンの三角形）
+    // プレイヤー描画（シアンの三角形）
     ctx.fillStyle = "cyan";
     ctx.beginPath();
     ctx.moveTo(player.x, player.y);
@@ -184,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 敵を定期的に出現させる（1.5秒間隔）
+  // 敵を1.5秒間隔で生成
   setInterval(spawnEnemy, 1500);
 
   console.log("Starting game loop.");
