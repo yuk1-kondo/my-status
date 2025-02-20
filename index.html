@@ -2,21 +2,45 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <!-- maximum-scale=1.0 と user-scalable=no でズームを防止 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>シューティングゲーム & イマココ</title>
   <style>
-    body { text-align: center; background: black; color: white; margin: 0; overflow: hidden; }
-    canvas { background: black; display: block; margin: auto; }
+    body { 
+      text-align: center; 
+      background: black; 
+      color: white; 
+      margin: 0; 
+      overflow: hidden; 
+    }
+    /* Canvas に touch-action: none; でスマホでのズーム・パンを抑制 */
+    canvas { 
+      background: black; 
+      display: block; 
+      margin: auto; 
+      touch-action: none;
+    }
     .controls { 
-      position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 10px; 
+      position: fixed; 
+      bottom: 10px; 
+      left: 50%; 
+      transform: translateX(-50%);
+      display: flex; 
+      gap: 10px; 
     }
     .button { 
-      width: 60px; height: 60px; background: white; color: black; 
-      font-size: 24px; border: none; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center; 
+      width: 60px; 
+      height: 60px; 
+      background: white; 
+      color: black; 
+      font-size: 24px; 
+      border: none; 
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
     }
-    /* イマココ表示エリアは最初非表示 */
+    /* 初期状態で「イマココ」表示エリアは非表示 */
     #locationContainer {
       display: none;
       background: white;
@@ -31,8 +55,8 @@
   <h1>シューティングゲーム</h1>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- スマホ用仮想ボタン -->
-  <div class="controls">
+  <!-- スマホ用仮想ボタン：PCの場合は後述のスクリプトで非表示にします -->
+  <div id="controls" class="controls">
     <button id="leftBtn" class="button">◀</button>
     <button id="shootBtn" class="button">🔺</button>
     <button id="rightBtn" class="button">▶</button>
@@ -45,7 +69,7 @@
     <p><strong>最終更新:</strong> <span id="lastUpdated">-</span></p>
   </div>
 
-  <!-- defer 属性付きでスクリプトを読み込み -->
+  <!-- defer 属性付きでスクリプト読み込み（DOM 完全読み込み後に実行） -->
   <script src="script.js" defer></script>
 </body>
 </html>
