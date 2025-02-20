@@ -13,12 +13,12 @@
       margin: 0; 
       overflow: hidden; 
     }
-    /* Canvas に touch-action: none; でスマホのズーム・スクロールを抑制 */
+    /* キャンバスをやや小さめにして操作しやすく */
     canvas { 
       background: black; 
       display: block; 
       margin: auto; 
-      touch-action: none;
+      touch-action: none; /* スマホでの拡大やスクロールを防止 */
     }
     .controls { 
       position: fixed; 
@@ -41,19 +41,17 @@
       justify-content: center; 
     }
 
-    /* ゲームクリア後に表示する「イマココ」エリアをオーバーレイで中央表示 */
-    #locationContainer {
+    /* 「イマドコ」カードを最初は非表示に */
+    #locationCard {
       display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.85); /* 半透明の黒背景 */
-      color: white;
+      background: white;
+      color: black;
       padding: 20px;
+      margin-top: 20px;
       border-radius: 10px;
       width: 80%;
       max-width: 400px;
+      margin: auto; /* 中央寄せ */
     }
   </style>
 </head>
@@ -61,18 +59,20 @@
   <h1>シューティングゲーム</h1>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- スマホ用仮想ボタン：PCの場合は script.js で非表示にします -->
+  <!-- スマホ用仮想ボタン：PCでは非表示にします -->
   <div id="controls" class="controls">
     <button id="leftBtn" class="button">◀</button>
     <button id="shootBtn" class="button">🔺</button>
     <button id="rightBtn" class="button">▶</button>
   </div>
 
-  <!-- ゲームクリア後に表示する「イマココ」エリア -->
-  <div id="locationContainer">
-    <h2>イマドコ</h2>
-    <p><strong>イマココ:</strong> <span id="status">???</span></p>
-    <p><strong>最終更新:</strong> <span id="lastUpdated">-</span></p>
+  <!-- クリア後に表示する「イマドコ」カード -->
+  <div id="locationCard">
+    <div class="card">
+      <h1>イマドコ</h1>
+      <p><strong>イマココ:</strong> <span id="status">読み込み中...</span></p>
+      <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
+    </div>
   </div>
 
   <!-- defer 属性付きでスクリプト読み込み -->
