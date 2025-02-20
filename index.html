@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <!-- maximum-scale=1.0 と user-scalable=no でズームを防止 -->
+  <!-- maximum-scale=1.0 と user-scalable=no でスマホのズームを防止 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>シューティングゲーム & イマココ</title>
   <style>
@@ -13,7 +13,7 @@
       margin: 0; 
       overflow: hidden; 
     }
-    /* Canvas に touch-action: none; でスマホでのズーム・パンを抑制 */
+    /* Canvas に touch-action: none; でスマホのズーム・スクロールを抑制 */
     canvas { 
       background: black; 
       display: block; 
@@ -40,14 +40,20 @@
       align-items: center; 
       justify-content: center; 
     }
-    /* 初期状態で「イマココ」表示エリアは非表示 */
+
+    /* ゲームクリア後に表示する「イマココ」エリアをオーバーレイで中央表示 */
     #locationContainer {
       display: none;
-      background: white;
-      color: black;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85); /* 半透明の黒背景 */
+      color: white;
       padding: 20px;
-      margin-top: 20px;
       border-radius: 10px;
+      width: 80%;
+      max-width: 400px;
     }
   </style>
 </head>
@@ -55,7 +61,7 @@
   <h1>シューティングゲーム</h1>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- スマホ用仮想ボタン：PCの場合は後述のスクリプトで非表示にします -->
+  <!-- スマホ用仮想ボタン：PCの場合は script.js で非表示にします -->
   <div id="controls" class="controls">
     <button id="leftBtn" class="button">◀</button>
     <button id="shootBtn" class="button">🔺</button>
@@ -64,12 +70,12 @@
 
   <!-- ゲームクリア後に表示する「イマココ」エリア -->
   <div id="locationContainer">
-    <h1>イマドコ</h1>
+    <h2>イマドコ</h2>
     <p><strong>イマココ:</strong> <span id="status">???</span></p>
     <p><strong>最終更新:</strong> <span id="lastUpdated">-</span></p>
   </div>
 
-  <!-- defer 属性付きでスクリプト読み込み（DOM 完全読み込み後に実行） -->
+  <!-- defer 属性付きでスクリプト読み込み -->
   <script src="script.js" defer></script>
 </body>
 </html>
