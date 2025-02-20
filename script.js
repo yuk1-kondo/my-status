@@ -3,29 +3,29 @@ let canvas, ctx;
 let player, bullets, enemies, score;
 let gameOver, gameClear;
 const targetScore = 50; // 50点でクリア
-let enemyInterval = null;
-let gameLoopId = null;
+let enemyInterval = null;  // 敵生成用の interval ID
+let gameLoopId = null;     // ゲームループ用の ID
 
-// タッチ開始位置を記録
-let touchStartX = null, touchStartY = null;
+// タッチ操作用：移動用タッチの識別
+let movementTouchId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM loaded. Waiting for Start button...");
 
   canvas = document.getElementById("gameCanvas");
   ctx = canvas.getContext("2d");
+  // キャンバスサイズは固定：320×240
   canvas.width = 320;
   canvas.height = 240;
 
-  // PCの場合はキーボード操作のみ利用するので、タッチUIは使わない
-  // スタートボタン
+  // スタートボタンのクリックイベント（オーバーレイ内）
   document.getElementById("startBtn").addEventListener("click", () => {
     console.log("Start button pressed. Initializing game...");
     document.getElementById("overlay").style.display = "none";
     initGame();
   });
 
-  // PC用キーボード操作
+  // PC用キーボード操作（タッチイベントはスマホ用）
   document.addEventListener("keydown", (e) => {
     if (!player) return;
     if (e.key === "ArrowLeft") player.dx = -player.speed;
@@ -44,46 +44,67 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function handleTouchStart(e) {
-  // 1本目のタッチのみ扱う
-  const touch = e.touches[0];
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
-  // キャンバス内の座標に変換
+  // 複数タッチの場合、すべて確認
   const rect = canvas.getBoundingClientRect();
-  const x = touch.clientX - rect.left;
-  // 画面の左右で移動方向を決定
-  if (x < canvas.width / 2) {
-    if (player) player.dx = -player.speed;
-  } else {
-    if (player) player.dx = player.speed;
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    // キャンバス下部20%を移動用エリアとする
+    const movementThreshold = canvas.height * 0.8;
+    if (y >= movementThreshold) {
+      // 移動用タッチとして識別（最初の一つだけ使用）
+      if (movementTouchId === null) {
+        movementTouchId = touch.identifier;
+        if (x < canvas.width / 2) {
+          if (player) player.dx = -player.speed;
+        } else {
+          if (player) player.dx = player.speed;
+        }
+      }
+    } else {
+      // 上部エリアはタップとして発射
+      shoot();
+    }
   }
   e.preventDefault();
 }
 
 function handleTouchMove(e) {
-  // 特に何もしなくてもOK（すでにtouchstartで方向決定済み）
+  const rect = canvas.getBoundingClientRect();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    if (touch.identifier === movementTouchId) {
+      const x = touch.clientX - rect.left;
+      // 移動方向の更新：左右で判定
+      if (x < canvas.width / 2) {
+        if (player) player.dx = -player.speed;
+      } else {
+        if (player) player.dx = player.speed;
+      }
+    }
+  }
   e.preventDefault();
 }
 
 function handleTouchEnd(e) {
-  // タッチ終了時、移動停止
-  if (player) player.dx = 0;
-  // タッチ距離が短かったら発射と判断
-  const touch = e.changedTouches[0];
-  const dx = touch.clientX - touchStartX;
-  const dy = touch.clientY - touchStartY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  if (distance < 10) { // 10px未満ならタップと判定
-    shoot();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    if (touch.identifier === movementTouchId) {
+      if (player) player.dx = 0;
+      movementTouchId = null;
+    }
   }
   e.preventDefault();
 }
 
 // ゲーム初期化
 function initGame() {
+  // 前回の interval やループがあればキャンセル
   if (enemyInterval !== null) clearInterval(enemyInterval);
   if (gameLoopId !== null) cancelAnimationFrame(gameLoopId);
 
+  // プレイヤー、弾、敵、スコア、状態を初期化
   player = {
     x: canvas.width / 2,
     y: canvas.height - 30,
@@ -98,10 +119,14 @@ function initGame() {
   gameOver = false;
   gameClear = false;
 
+  // キャンバスと「イマドコ」カードの表示状態を調整
   canvas.style.display = "block";
   document.getElementById("locationCard").style.display = "none";
 
+  // 敵生成タイマー開始（1.5秒ごと）
   enemyInterval = setInterval(spawnEnemy, 1500);
+
+  // ゲームループ開始
   gameLoop();
 }
 
@@ -136,15 +161,16 @@ function update() {
     if (bullet.y < 0) bullets.splice(i, 1);
   });
 
-  // 敵移動と削除：プレイヤーの底（player.y）より下に行ったら削除
+  // 敵移動と処理
   for (let i = enemies.length - 1; i >= 0; i--) {
     const enemy = enemies[i];
     enemy.y += enemy.speed;
+    // 敵がプレイヤーの底（player.y）より下に行ったら削除
     if (enemy.y > player.y) {
       enemies.splice(i, 1);
       continue;
     }
-    // 赤い敵の場合、プレイヤーの三角形内に中心が入ればゲームオーバー
+    // 赤い敵の場合、プレイヤーの三角形内に敵の中心が入ればゲームオーバー
     if (enemy.type === 'red') {
       const ex = enemy.x + enemy.width / 2;
       const ey = enemy.y + enemy.height / 2;
@@ -199,13 +225,13 @@ function draw() {
   ctx.closePath();
   ctx.fill();
 
-  // 弾
+  // 弾描画
   ctx.fillStyle = "white";
   bullets.forEach(bullet => {
     ctx.fillRect(bullet.x, bullet.y, 5, 10);
   });
 
-  // 敵描画：赤は四角、黄色は円
+  // 敵描画：赤い敵は四角、黄色い敵は円
   enemies.forEach(enemy => {
     if (enemy.type === 'red') {
       ctx.fillStyle = "red";
@@ -247,8 +273,8 @@ function onGameClear() {
   enemies = [];
   bullets = [];
   if (enemyInterval !== null) clearInterval(enemyInterval);
+  // クリア時はキャンバスを非表示して、イマドコカードのみ表示
   canvas.style.display = "none";
-  // ゲームクリア時は「イマドコ」カードのみ表示
   fetchLocationCard();
 }
 
@@ -280,9 +306,4 @@ function isPointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
   const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
   const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
   return (u >= 0) && (v >= 0) && (u + v < 1);
-}
-  
-// ゲームループ開始
-function startLoop() {
-  gameLoop();
 }
