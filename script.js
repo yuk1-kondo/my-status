@@ -3,10 +3,10 @@ let canvas, ctx;
 let player, bullets, enemies, score;
 let gameOver, gameClear;
 const targetScore = 50; // 50点でクリア
-let enemyInterval = null;  // 敵生成用の interval ID
-let gameLoopId = null;     // ゲームループ用の ID
+let enemyInterval = null;  // 敵生成用 interval
+let gameLoopId = null;     // ゲームループ用 ID
 
-// タッチ操作用：移動用タッチ識別用
+// タッチ操作用：移動用タッチ識別
 let movementTouchId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -14,17 +14,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   canvas = document.getElementById("gameCanvas");
   ctx = canvas.getContext("2d");
+
+  // キャンバスサイズを設定 (PC or スマホ判定)
   setCanvasSize();
   window.addEventListener("resize", setCanvasSize);
 
-  // スタートボタンのクリックイベント（オーバーレイ内）
+  // スタートボタン押下でゲーム開始
   document.getElementById("startBtn").addEventListener("click", () => {
     console.log("Start button pressed. Initializing game...");
     document.getElementById("overlay").style.display = "none";
     initGame();
   });
 
-  // PC用キーボード操作
+  // PC向けキーボード操作
   document.addEventListener("keydown", (e) => {
     if (!player) return;
     if (e.key === "ArrowLeft") player.dx = -player.speed;
@@ -36,28 +38,37 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
   });
 
-  // スマホ用：キャンバスにタッチイベントを設定
+  // スマホ向け：キャンバスにタッチイベントを設定
   canvas.addEventListener("touchstart", handleTouchStart);
   canvas.addEventListener("touchmove", handleTouchMove);
   canvas.addEventListener("touchend", handleTouchEnd);
 });
 
+/** PC or スマホ判定し、キャンバスサイズを調整 */
 function setCanvasSize() {
-  // キャンバスをウィンドウ全体にフィットさせる
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    // スマホでは全画面
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  } else {
+    // PCでは最大640×480に制限
+    canvas.width = Math.min(window.innerWidth, 640);
+    canvas.height = Math.min(window.innerHeight, 480);
+  }
 }
 
+/** タッチ開始 */
 function handleTouchStart(e) {
   const rect = canvas.getBoundingClientRect();
   for (let i = 0; i < e.changedTouches.length; i++) {
     const touch = e.changedTouches[i];
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
-    // 下部20％を移動用エリアとする
+    // 下部20％を移動用エリアに
     const movementThreshold = canvas.height * 0.8;
     if (y >= movementThreshold) {
-      // 移動用タッチとして識別（初めの1本のみ）
+      // 移動タッチとして識別
       if (movementTouchId === null) {
         movementTouchId = touch.identifier;
         if (x < canvas.width / 2) {
@@ -67,13 +78,14 @@ function handleTouchStart(e) {
         }
       }
     } else {
-      // 上部80％はタップで発射
+      // 上部はタップで発射
       shoot();
     }
   }
   e.preventDefault();
 }
 
+/** タッチ移動 */
 function handleTouchMove(e) {
   const rect = canvas.getBoundingClientRect();
   for (let i = 0; i < e.changedTouches.length; i++) {
@@ -90,6 +102,7 @@ function handleTouchMove(e) {
   e.preventDefault();
 }
 
+/** タッチ終了 */
 function handleTouchEnd(e) {
   for (let i = 0; i < e.changedTouches.length; i++) {
     const touch = e.changedTouches[i];
@@ -101,15 +114,15 @@ function handleTouchEnd(e) {
   e.preventDefault();
 }
 
+/** ゲーム初期化 */
 function initGame() {
-  // 前回の interval やループがあればキャンセル
   if (enemyInterval !== null) clearInterval(enemyInterval);
   if (gameLoopId !== null) cancelAnimationFrame(gameLoopId);
-  
-  // キャンバスサイズを最新に更新
+
+  // キャンバスサイズを最新化
   setCanvasSize();
-  
-  // プレイヤー、弾、敵、スコア、状態を初期化
+
+  // プレイヤー・弾・敵・スコア初期化
   player = {
     x: canvas.width / 2,
     y: canvas.height - 30,
@@ -123,67 +136,71 @@ function initGame() {
   score = 0;
   gameOver = false;
   gameClear = false;
-  
+
   canvas.style.display = "block";
   document.getElementById("locationCard").style.display = "none";
-  
-  // 敵生成タイマー開始（1.5秒ごと）
+
+  // 敵を1.5秒ごとに生成
   enemyInterval = setInterval(spawnEnemy, 1500);
-  
+
   // ゲームループ開始
   gameLoop();
 }
 
+/** 弾発射（最大5発） */
 function shoot() {
   if (!player) return;
   if (bullets.length < 5) {
-    bullets.push({ x: player.x + player.width/2, y: player.y, speed: 4 });
+    bullets.push({ x: player.x + player.width / 2, y: player.y, speed: 4 });
   }
 }
 
+/** 敵生成（70%ダークグレー四角、30%オレンジ丸） */
 function spawnEnemy() {
   if (!gameOver && !gameClear) {
     const x = Math.random() * (canvas.width - 20);
-    const type = (Math.random() < 0.7) ? 'red' : 'yellow';
-    enemies.push({ x, y: 0, width: 20, height: 20, speed: 1.5, type: type });
+    const type = (Math.random() < 0.7) ? 'gray' : 'orange';
+    enemies.push({ x, y: 0, width: 20, height: 20, speed: 1.5, type });
   }
 }
 
+/** ゲーム更新処理 */
 function update() {
   if (gameOver || gameClear) return;
-  
+
   // プレイヤー移動
   player.x += player.dx;
   if (player.x < 0) player.x = 0;
   if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-  
+
   // 弾移動
   bullets.forEach((bullet, i) => {
     bullet.y -= bullet.speed;
     if (bullet.y < 0) bullets.splice(i, 1);
   });
-  
-  // 敵移動と削除：プレイヤーの底（player.y）より下に行ったら削除
+
+  // 敵移動と処理
   for (let i = enemies.length - 1; i >= 0; i--) {
     const enemy = enemies[i];
     enemy.y += enemy.speed;
+    // プレイヤー底より下なら削除
     if (enemy.y > player.y) {
       enemies.splice(i, 1);
       continue;
     }
-    // 赤い敵の場合、プレイヤーの三角形内に敵の中心が入ればゲームオーバー
-    if (enemy.type === 'red') {
-      const ex = enemy.x + enemy.width/2;
-      const ey = enemy.y + enemy.height/2;
+    // ダークグレー敵なら三角形衝突チェック
+    if (enemy.type === 'gray') {
+      const ex = enemy.x + enemy.width / 2;
+      const ey = enemy.y + enemy.height / 2;
       const ax = player.x, ay = player.y;
-      const bx = player.x + player.width/2, by = player.y - player.height;
+      const bx = player.x + player.width / 2, by = player.y - player.height;
       const cx = player.x + player.width, cy = player.y;
       if (isPointInTriangle(ex, ey, ax, ay, bx, by, cx, cy)) {
         gameOver = true;
       }
     }
   }
-  
+
   // 衝突判定（弾 vs 敵）
   for (let bi = bullets.length - 1; bi >= 0; bi--) {
     const bullet = bullets[bi];
@@ -195,18 +212,21 @@ function update() {
         bullet.y < enemy.y + enemy.height &&
         bullet.y + 10 > enemy.y
       ) {
+        // 当たったので削除
         enemies.splice(ei, 1);
         bullets.splice(bi, 1);
-        if (enemy.type === 'red') {
+        // ダークグレーは+10, オレンジは-5
+        if (enemy.type === 'gray') {
           score += 10;
-        } else if (enemy.type === 'yellow') {
+        } else {
           score -= 5;
         }
         break;
       }
     }
   }
-  
+
+  // クリア判定
   if (score >= targetScore && !gameClear) {
     gameClear = true;
     onGameClear();
@@ -214,54 +234,62 @@ function update() {
   draw();
 }
 
+/** 描画処理 */
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // プレイヤー（三角形）描画
-  ctx.fillStyle = "cyan";
+
+  // プレイヤー（三角形）: ホワイト塗り + ブラック枠線
+  ctx.fillStyle = "#ffffff";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(player.x, player.y);
-  ctx.lineTo(player.x + player.width/2, player.y - player.height);
+  ctx.lineTo(player.x + player.width / 2, player.y - player.height);
   ctx.lineTo(player.x + player.width, player.y);
   ctx.closePath();
   ctx.fill();
-  
-  // 弾描画
-  ctx.fillStyle = "white";
+  ctx.stroke();
+
+  // 弾はブラック
+  ctx.fillStyle = "#000000";
   bullets.forEach(bullet => {
     ctx.fillRect(bullet.x, bullet.y, 5, 10);
   });
-  
-  // 敵描画：赤い敵は四角、黄色い敵は円
+
+  // 敵描画：gray -> ダークグレー四角, orange -> オレンジ丸
   enemies.forEach(enemy => {
-    if (enemy.type === 'red') {
-      ctx.fillStyle = "red";
+    if (enemy.type === "gray") {
+      ctx.fillStyle = "#333333"; // ダークグレー
       ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
     } else {
-      ctx.fillStyle = "yellow";
+      ctx.fillStyle = "#ffa500"; // オレンジ
       ctx.beginPath();
-      ctx.arc(enemy.x + enemy.width/2, enemy.y + enemy.height/2, enemy.width/2, 0, Math.PI*2);
+      ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width / 2, 0, Math.PI * 2);
       ctx.fill();
     }
   });
-  
-  // スコア表示
-  ctx.fillStyle = "green";
+
+  // スコア表示（黒文字）
+  ctx.fillStyle = "#000000";
   ctx.font = "16px Arial";
   ctx.fillText("Score: " + score, 10, 20);
-  
+
+  // ゲームオーバー表示
   if (gameOver) {
-    ctx.fillStyle = "red";
+    ctx.fillStyle = "#000000"; // 黒
     ctx.font = "30px Arial";
-    ctx.fillText("Game Over!", canvas.width/2 - 80, canvas.height/2);
+    ctx.fillText("Game Over!", canvas.width / 2 - 80, canvas.height / 2);
   }
+
+  // クリア表示
   if (gameClear) {
-    ctx.fillStyle = "yellow";
+    ctx.fillStyle = "#ffa500"; // オレンジ
     ctx.font = "30px Arial";
-    ctx.fillText("You Win!", canvas.width/2 - 60, canvas.height/2);
+    ctx.fillText("You Win!", canvas.width / 2 - 60, canvas.height / 2);
   }
 }
 
+/** メインループ */
 function gameLoop() {
   update();
   if (!gameOver && !gameClear) {
@@ -269,16 +297,18 @@ function gameLoop() {
   }
 }
 
+/** クリア時の処理 */
 function onGameClear() {
   console.log("Game Cleared!");
   enemies = [];
   bullets = [];
   if (enemyInterval !== null) clearInterval(enemyInterval);
-  // クリア時はキャンバスを非表示して、「イマドコ」カードのみ表示
+  // キャンバスを非表示し、「イマドコ」カードを表示
   canvas.style.display = "none";
   fetchLocationCard();
 }
 
+/** イマドコ情報を取得・表示 */
 async function fetchLocationCard() {
   try {
     const response = await fetch("location.json?nocache=" + Date.now());
@@ -293,6 +323,7 @@ async function fetchLocationCard() {
   document.getElementById("locationCard").style.display = "block";
 }
 
+/** 三角形内判定（プレイヤー本体） */
 function isPointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
   const v0x = cx - ax, v0y = cy - ay;
   const v1x = bx - ax, v1y = by - ay;
