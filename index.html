@@ -1,37 +1,50 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>イマドコ</title>
-  <link rel="stylesheet" href="https://yuk1-kondo.github.io/my-status/style.css"/>
-  <script>
-    async function loadStatus() {
-      try {
-        const response = await fetch("location.json?nocache=" + Date.now());
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>シューティングゲーム & イマココ</title>
+    <style>
+        body { text-align: center; background: black; color: white; margin: 0; overflow: hidden; }
+        canvas { background: black; display: block; margin: auto; }
+        .controls { 
+            position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; 
         }
-        const data = await response.json();
-        // 現在の場所は JSON から読み込む
-        document.getElementById("status").textContent = data.status;
-        // 最終更新はユーザーがアクセスした時刻に設定
-        document.getElementById("lastUpdated").textContent = new Date().toLocaleString("ja-JP");
-      } catch (error) {
-        document.getElementById("status").textContent = "取得失敗";
-        document.getElementById("lastUpdated").textContent = "-";
-      }
-    }
-    window.onload = loadStatus;
-  </script>
+        .button { 
+            width: 60px; height: 60px; background: white; color: black; 
+            font-size: 24px; border: none; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+        }
+        /* 「イマココ」の表示を最初は隠す */
+        #locationContainer {
+            display: none;
+            background: white;
+            color: black;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>イマドコ</h1>
-      <p><strong>イマココ:</strong> <span id="status">読み込み中...</span></p>
-      <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
+    <h1>シューティングゲーム</h1>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- スマホ用仮想ボタン -->
+    <div class="controls">
+        <button id="leftBtn" class="button">◀</button>
+        <button id="shootBtn" class="button">🔺</button>
+        <button id="rightBtn" class="button">▶</button>
     </div>
-  </div>
+
+    <!-- イマココ表示エリア（ゲームクリア後に表示） -->
+    <div id="locationContainer">
+        <h1>イマドコ</h1>
+        <p><strong>イマココ:</strong> <span id="status">???</span></p>
+        <p><strong>最終更新:</strong> <span id="lastUpdated">-</span></p>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
