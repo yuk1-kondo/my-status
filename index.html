@@ -3,33 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <!-- スマホのズームを防止 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
   <title>こんちゃんイマドコシューティング</title>
   <style>
+    /* 背景はホワイト */
     html, body {
       margin: 0;
       padding: 0;
-      background: black;
-      color: white;
+      background: #ffffff; /* 白 */
+      color: #000000;      /* 黒文字 */
       width: 100%;
       height: 100%;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      box-sizing: border-box;
     }
-    /* キャンバスは全画面表示 */
+
+    /* キャンバスはデバイス判定によりサイズ変更 (script.jsで制御) */
     canvas {
-      background: black;
+      background: #f2f2f2; /* 薄いグレー */
       display: block;
-      width: 100%;
-      height: 100%;
-      touch-action: none; /* ズーム・スクロール防止 */
+      touch-action: none; /* スマホのズーム・スクロール防止 */
     }
-    /* オーバーレイは画面全体を覆う */
+
+    /* スタート時のオーバーレイ */
     #overlay {
       position: fixed;
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.9);
+      background: rgba(255, 255, 255, 0.9); /* 白ベースの半透明 */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -39,11 +45,16 @@
       box-sizing: border-box;
     }
     #overlay button {
+      background: #ffa500; /* オレンジ */
+      color: #000000;      /* 黒文字 */
       padding: 10px 20px;
       font-size: 24px;
+      border: none;
       cursor: pointer;
       margin-top: 20px;
+      border-radius: 6px;
     }
+
     /* 説明文 */
     .instructions {
       text-align: left;
@@ -51,17 +62,20 @@
       margin: 0 auto;
       line-height: 1.6;
       font-size: 18px;
+      color: #000000; /* 黒文字 */
     }
+
     /* クリア後に表示する「イマドコ」カード */
     #locationCard {
       display: none;
-      background: white;
-      color: black;
+      background: #ffffff; /* 白 */
+      color: #000000;      /* 黒文字 */
       padding: 20px;
       border-radius: 10px;
       width: 90%;
       max-width: 400px;
       margin: 20px auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
     }
   </style>
 </head>
@@ -83,11 +97,11 @@
     <div class="instructions">
       <h2>ゲームの遊び方</h2>
       <ul>
-        <li>【スマホの場合】キャンバス上部80％はタップで弾を発射、下部20％は左右移動専用（左側なら左、右側なら右へ）。</li>
-        <li>【PCの場合】キーボードの左右矢印で移動、スペースキーまたはEnterキーで発射。</li>
-        <li>赤い四角（敵）はプレイヤーの三角形内に衝突するとゲームオーバー。</li>
-        <li>黄色い丸は撃つとスコアが-5されます。</li>
-        <li>敵を倒すとスコア+10、スコア50点でクリアです。</li>
+        <li>【スマホ】キャンバス上部80％をタップで弾を発射、下部20％で左右移動。</li>
+        <li>【PC】←→キーで移動、スペース/Enterで弾を発射。</li>
+        <li>黒い四角が敵（当たると+10点）。プレイヤー三角形に衝突するとゲームオーバー。</li>
+        <li>オレンジの丸は撃つと-5点。</li>
+        <li>スコアが50点に到達するとクリア！</li>
       </ul>
       <p>頑張ってください！</p>
     </div>
