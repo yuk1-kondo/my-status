@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <!-- maximum-scale=1.0 と user-scalable=no でスマホのズームを防止 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>シューティングゲーム & イマココ</title>
+  <title>こんちゃんイマドコシューティング</title>
   <style>
     body { 
       text-align: center; 
@@ -53,10 +53,35 @@
       max-width: 400px;
       margin: auto; /* 中央寄せ */
     }
+
+    /* ゲーム説明 */
+    .description {
+      margin: 10px auto;
+      max-width: 600px;
+      padding: 0 10px;
+      text-align: left;
+      line-height: 1.6;
+    }
+    .description h2 {
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
-  <h1>シューティングゲーム</h1>
+  <h1>こんちゃんイマドコシューティング</h1>
+
+  <!-- ★ ゲームの説明を表示するブロック -->
+  <div class="description">
+    <h2>ゲームの遊び方</h2>
+    <ul>
+      <li>左右キー（または下のボタン）で移動</li>
+      <li>スペースキーまたは上ボタンで弾を発射</li>
+      <li>敵を倒すとスコアが上がります</li>
+      <li>目標スコアに達すると「イマドコ」情報が表示されます</li>
+    </ul>
+    <p>敵を逃がさないようにがんばってください！</p>
+  </div>
+
   <canvas id="gameCanvas"></canvas>
 
   <!-- スマホ用仮想ボタン：PCでは非表示にします -->
@@ -69,7 +94,7 @@
   <!-- クリア後に表示する「イマドコ」カード -->
   <div id="locationCard">
     <div class="card">
-      <h1>イマドコ</h1>
+      <h1>こんちゃんイマドコ</h1>
       <p><strong>イマココ:</strong> <span id="status">読み込み中...</span></p>
       <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
     </div>
