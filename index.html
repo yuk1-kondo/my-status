@@ -40,7 +40,8 @@
       align-items: center; 
       justify-content: center; 
     }
-    /* 「イマドコ」カード（クリア後の情報カード） */
+
+    /* 「イマドコ」カードは初期状態では非表示 */
     #locationCard {
       display: none;
       background: white;
@@ -52,7 +53,8 @@
       max-width: 400px;
       margin: auto; /* 中央寄せ */
     }
-    /* スタート／リスタートオーバーレイ */
+
+    /* スタート／リスタート用オーバーレイ */
     #overlay {
       position: fixed;
       top: 0; left: 0;
@@ -70,6 +72,7 @@
       font-size: 24px;
       cursor: pointer;
     }
+
     /* ゲーム説明（任意） */
     .description {
       margin: 10px auto;
@@ -92,8 +95,7 @@
     <ul>
       <li>左右キー（または下のボタン）で移動</li>
       <li>スペースキーまたは上ボタンで弾を発射</li>
-      <li>敵を倒すとスコアが上がります</li>
-      <li>スコア10点でゲームクリア</li>
+      <li>敵を倒すとスコアが上がり、スコア10点でクリア！</li>
     </ul>
     <p>頑張ってください！</p>
   </div>
