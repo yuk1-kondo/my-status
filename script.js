@@ -1,5 +1,5 @@
 // 定数・グローバル変数
-const targetScore = 20; // ゲームクリア条件
+const targetScore = 100; // ゲームクリア条件
 let canvas, ctx;
 let player, bullets, enemies, powerups;
 let score, lives, level;
