@@ -494,15 +494,16 @@ function startEnemyGeneration() {
   enemyInterval = setInterval(() => {
     if (gamePaused || gameOver || gameClear) return;
     const rand = Math.random();
-    if (rand < 0.2) {
+    if (rand < 0.4) {          // 40%の確率でグレーの敵
       spawnEnemy("gray");
-    } else if (rand < 0.6) {
+    } else if (rand < 0.7) {     // 30%でオレンジの敵
       spawnEnemy("orange");
-    } else {
+    } else {                   // 30%でジグザグの敵
       spawnEnemy("zigzag");
     }
   }, interval);
 }
+
 
 function spawnEnemy(type) {
   const width = 20;
@@ -521,6 +522,9 @@ function spawnEnemy(type) {
   if (type === "gray") {
     enemy.speed = 1.5 + Math.random() * 0.5;
     enemy.score = 10;
+    // グレーの敵も射撃可能にする
+    enemy.canShoot = true;
+    enemy.shootInterval = 120 + Math.floor(Math.random() * 50);
   } else if (type === "orange") {
     enemy.speed = 2 + Math.random() * 1;
     enemy.score = -5;
@@ -541,6 +545,7 @@ function spawnEnemy(type) {
   enemies.push(enemy);
 }
 
+
 function updateEnemies() {
   for (let i = enemies.length - 1; i >= 0; i--) {
     let enemy = enemies[i];
@@ -548,6 +553,10 @@ function updateEnemies() {
     
     if (enemy.type === "gray") {
       enemy.y += enemy.speed;
+      // グレーの敵も一定間隔で玉を発射する
+      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
+        spawnEnemyBullet(enemy);
+      }
     } else if (enemy.type === "orange") {
       enemy.y += enemy.speed;
       if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
@@ -587,6 +596,7 @@ function updateEnemies() {
     }
   }
 }
+
 
 function spawnPowerup() {
   if (gamePaused || gameOver || gameClear) return;
