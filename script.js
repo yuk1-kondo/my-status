@@ -823,9 +823,21 @@ function showLocationCard() {
   if (powerupInterval) clearInterval(powerupInterval);
   const locationCard = document.getElementById("locationCard");
   locationCard.style.display = "flex";
-  document.getElementById("status").textContent = "大阪市中央区";
-  document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
-  // locationCard内のリスタートボタンにイベントを設定
+  
+  // location.json を読み込み、内容を反映する
+  fetch("location.json")
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById("status").textContent = data.status.trim();
+      document.getElementById("lastUpdated").textContent = data.last_updated;
+    })
+    .catch(error => {
+      console.error("location.json の読み込みに失敗しました:", error);
+      document.getElementById("status").textContent = "情報取得失敗";
+      document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
+    });
+  
+  // locationCard 内のリスタートボタンにイベントを設定
   document.getElementById("restartBtn").addEventListener("click", () => {
     locationCard.style.display = "none";
     document.getElementById("gameHUD").style.display = "block";
