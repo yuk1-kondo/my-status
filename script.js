@@ -213,6 +213,7 @@ function loadGameAssets() {
   }
 }
 
+// DOMContentLoadedイベントハンドラの修正
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("gameCanvas");
   ctx = canvas.getContext("2d");
@@ -222,7 +223,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("startBtn").addEventListener("click", () => {
     document.getElementById("overlay").style.display = "none";
-    document.getElementById("gameHUD").style.display = "block";
+    // 外部HUDを使わないので、この行を削除
+    // document.getElementById("gameHUD").style.display = "block";
     initGame();
   });
   
@@ -230,7 +232,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (restartBtn) {
     restartBtn.addEventListener("click", () => {
       document.getElementById("locationCard").style.display = "none";
-      document.getElementById("gameHUD").style.display = "block";
+      // 外部HUDを使わないので、この行を削除
+      // document.getElementById("gameHUD").style.display = "block";
       initGame();
     });
   }
@@ -320,7 +323,9 @@ function initGame() {
   playerPowerupType = null;
   powerupTimer = 0;
 
-  updateHUD();
+  // 外部HUDは使わないのでコメントアウトまたは削除
+  // updateHUD();
+  
   canvas.style.display = "block";
   document.getElementById("locationCard").style.display = "none";
 
@@ -329,10 +334,23 @@ function initGame() {
   gameLoop();
 }
 
-function updateHUD() {
-  document.getElementById("scoreDisplay").textContent = score;
-  document.getElementById("livesDisplay").textContent = lives;
-  document.getElementById("levelDisplay").textContent = level;
+//キャンバス上にHUDを描画する
+function drawHUD() {
+  // 背景
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(10, 10, 150, 70);
+  
+  // 枠線
+  ctx.strokeStyle = "#4a5eff";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(10, 10, 150, 70);
+  
+  // テキスト
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "14px Arial";
+  ctx.fillText(`スコア: ${score}`, 20, 30);
+  ctx.fillText(`残機: ${lives}`, 20, 50);
+  ctx.fillText(`レベル: ${level}`, 20, 70);
 }
 
 function gameLoop() {
@@ -345,8 +363,9 @@ function gameLoop() {
   updateEnemyBullets();
   updateParticles();
   checkCollisions();
-  updateHUD();
-
+  // updateHUD(); // 既存の関数呼び出しを削除または無効化
+  drawHUD();     // 新しい描画関数を呼び出し
+  
   if (score >= targetScore) {
     gameClear = true;
     showLocationCard();
@@ -798,25 +817,32 @@ function showPowerupNotification(text) {
   }, 2000);
 }
 
+// ゲームオーバー時の処理を修正
 function endGame() {
   gamePaused = true;
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
   const overlay = document.getElementById("overlay");
+  
+  // 異なるIDを使用してボタンを作成
   overlay.innerHTML = `
     <div class="instructions">
       <h2>GAME OVER</h2>
       <p>残機がなくなりました。</p>
-      <button id="restartBtn">リスタート</button>
+      <button id="gameOverRestartBtn">リスタート</button>
     </div>
   `;
   overlay.style.display = "flex";
-  document.getElementById("restartBtn").addEventListener("click", () => {
+  
+  // 一度だけイベントリスナーを追加
+  const gameOverRestartBtn = document.getElementById("gameOverRestartBtn");
+  gameOverRestartBtn.addEventListener("click", function() {
     overlay.style.display = "none";
     initGame();
   });
 }
 
+// ゲームクリア後の処理も修正
 function showLocationCard() {
   gamePaused = true;
   if (enemyInterval) clearInterval(enemyInterval);
@@ -836,9 +862,17 @@ function showLocationCard() {
       document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
     });
   
-  document.getElementById("restartBtn").addEventListener("click", () => {
-    locationCard.style.display = "none";
-    document.getElementById("gameHUD").style.display = "block";
-    initGame();
-  });
+  // すでに存在するボタンにリスナーが重複して追加されないようにする
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    // 既存のイベントリスナーを削除（クリーンアップ）
+    const newRestartBtn = restartBtn.cloneNode(true);
+    restartBtn.parentNode.replaceChild(newRestartBtn, restartBtn);
+    
+    // 新しいイベントリスナーを追加
+    newRestartBtn.addEventListener("click", () => {
+      locationCard.style.display = "none";
+      initGame();
+    });
+  }
 }
