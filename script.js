@@ -264,26 +264,24 @@ function setCanvasSize() {
   const windowHeight = window.innerHeight;
   
   if (isMobile) {
-    canvas.width = windowWidth;
+    // モバイル向けのサイズ調整 - 画面幅に合わせる
+    canvas.width = Math.min(windowWidth - 10, windowWidth * 0.95); // 少し余白を持たせる
     canvas.height = Math.min(windowHeight, windowWidth * 1.6);
   } else {
-    canvas.width = Math.min(windowWidth, 640);
-    canvas.height = Math.min(windowHeight, 480);
+    // PC向けのサイズ調整
+    canvas.width = Math.min(windowWidth * 0.8, 640);
+    canvas.height = Math.min(windowHeight * 0.8, 480);
   }
   
+  // 垂直方向の中央配置
   if (canvas.height < windowHeight) {
     canvas.style.top = ((windowHeight - canvas.height) / 2) + "px";
   } else {
     canvas.style.top = "0";
   }
   
-  // canvas の配置に合わせて HUD の位置も更新
-  const gameHUD = document.getElementById("gameHUD");
-  if (gameHUD) {
-    const canvasTop = parseInt(canvas.style.top, 10) || 0;
-    gameHUD.style.top = (canvasTop + 10) + "px";
-    gameHUD.style.left = "10px";
-  }
+  // canvasのスタイルで水平中央配置（CSSのtransformと連携）
+  canvas.style.left = "50%";
   
   if (player) {
     player.x = Math.min(player.x, canvas.width - player.width);
@@ -755,11 +753,16 @@ function handleTouchStart(e) {
   e.preventDefault();
   for (let touch of e.changedTouches) {
     let rect = canvas.getBoundingClientRect();
+    let touchX = touch.clientX - rect.left;
     let touchY = touch.clientY - rect.top;
-    if (touchY > canvas.height * 0.8) {
-      movementTouchId = touch.identifier;
-    } else {
-      shoot();
+    
+    // キャンバス内部の座標に変換
+    if (touchX >= 0 && touchX <= canvas.width && touchY >= 0 && touchY <= canvas.height) {
+      if (touchY > canvas.height * 0.8) {
+        movementTouchId = touch.identifier;
+      } else {
+        shoot();
+      }
     }
   }
 }
