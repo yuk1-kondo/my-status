@@ -1,5 +1,5 @@
 // 定数とグローバル変数
-const targetScore = 100;
+const targetScore = 100; // ゲームクリア条件を100点に変更
 let canvas, ctx;
 let player, bullets, enemies, powerups;
 let score, lives, level;
@@ -644,6 +644,17 @@ function handleTouchEnd(e) {
   e.preventDefault();
 }
 
+/* ゲームクリア時に location.json を読み込み、カードに反映 */
 function showLocationCard() {
-  document.getElementById("locationCard").style.display = "block";
+  fetch('location.json')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById("status").textContent = data.status;
+      document.getElementById("lastUpdated").textContent = data.last_updated;
+      document.getElementById("locationCard").style.display = "block";
+    })
+    .catch(error => {
+      console.error("Error fetching location.json: ", error);
+      document.getElementById("locationCard").style.display = "block";
+    });
 }
