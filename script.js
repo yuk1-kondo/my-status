@@ -539,22 +539,17 @@ function updateEnemies() {
       enemy.y += enemy.speed;
     } else if (enemy.type === "orange") {
       enemy.y += enemy.speed;
-      
-      // 弾を発射
       if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
         spawnEnemyBullet(enemy);
       }
     } else if (enemy.type === "zigzag") {
       enemy.y += enemy.speed;
       enemy.x = enemy.startX + Math.sin(enemy.y * enemy.frequency) * enemy.amplitude;
-      
-      // 色を変更
       if (enemy.frameCount % enemy.colorChangeRate === 0) {
         enemy.currentColor = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
       }
     }
     
-    // 画面外に出た場合は削除
     if (enemy.y > canvas.height) {
       enemies.splice(i, 1);
       continue;
@@ -564,7 +559,6 @@ function updateEnemies() {
     if (enemy.type === "gray" || enemy.type === "orange") {
       ctx.drawImage(sprites.enemies[enemy.type], enemy.x, enemy.y, enemy.width, enemy.height);
     } else if (enemy.type === "zigzag") {
-      // ジグザグ敵はカラフルに
       ctx.fillStyle = enemy.currentColor;
       ctx.beginPath();
       ctx.moveTo(enemy.x + enemy.width / 2, enemy.y);
@@ -573,7 +567,6 @@ function updateEnemies() {
       ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height / 2);
       ctx.closePath();
       ctx.fill();
-      
       // 目
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
@@ -609,18 +602,13 @@ function updatePowerups() {
     let powerup = powerups[i];
     powerup.frameCount++;
     powerup.y += powerup.speed;
-    
-    // 画面外に出た場合は削除
     if (powerup.y > canvas.height) {
       powerups.splice(i, 1);
       continue;
     }
-    
-    // パワーアップの描画
     ctx.drawImage(sprites.powerups[powerup.type], powerup.x, powerup.y, powerup.width, powerup.height);
   }
   
-  // プレイヤーのパワーアップタイマー更新
   if (playerPowerupType) {
     powerupTimer--;
     if (powerupTimer <= 0) {
@@ -635,13 +623,10 @@ function updateParticles() {
     p.x += p.dx;
     p.y += p.dy;
     p.life--;
-    
     if (p.life <= 0) {
       particles.splice(i, 1);
       continue;
     }
-    
-    // 粒子の描画
     ctx.globalAlpha = p.life / p.initialLife;
     ctx.fillStyle = p.color;
     ctx.beginPath();
@@ -656,7 +641,6 @@ function createExplosion(x, y, color, count = 15) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 0.5 + Math.random() * 2;
     const radius = 1 + Math.random() * 2;
-    
     particles.push({
       x: x,
       y: y,
@@ -669,7 +653,6 @@ function createExplosion(x, y, color, count = 15) {
     });
   }
   
-  // 爆発アニメーション表示
   let explosionFrame = 0;
   const explosionInterval = setInterval(() => {
     ctx.drawImage(sprites.explosions[explosionFrame], x - 15, y - 15, 30, 30);
@@ -680,51 +663,6 @@ function createExplosion(x, y, color, count = 15) {
   }, 50);
 }
 
-function checkCollisions() {
-  if (playerInvincible) {
-    invincibleTimer--;
-    if (invincibleTimer <= 0) {
-      playerInvincible = false;
-    }
-  }
-  
-  // 弾と敵の衝突判定
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    const bullet = bullets[i];
-    for (let j = enemies.length - 1; j >= 0; j--) {
-      const enemy = enemies[j];
-      if (
-        bullet.x < enemy.x + enemy.width &&
-        bullet.x + bullet.width > enemy.x &&
-        bullet.y < enemy.y + enemy.height &&
-        bullet.y + bullet.height > enemy.y
-      ) {
-        // 衝突発生
-        enemy.hp -= bullet.power;
-        bullets.splice(i, 1);
-        
-        if (enemy.hp <= 0) {
-          // 敵の撃破
-          score += enemy.score;
-          createExplosion(
-            enemy.x + enemy.width / 2,
-            enemy.y + enemy.height / 2,
-            enemy.type === "zigzag" ? enemy.currentColor : "#ffcc00"
-          );
-          enemies.splice(j, 1);
-          
-          // レベルアップ
-          if (score >= level * 20 && level < 5) {
-            level++;
-            startEnemyGeneration();
-          }
-        }
-        break;
-      }
-    }
-  }
-  
-// 衝突判定の補助関数（オブジェクト同士の矩形衝突判定）
 function isColliding(a, b) {
   return a.x < b.x + b.width &&
          a.x + a.width > b.x &&
@@ -741,23 +679,15 @@ function checkCollisions() {
     }
   }
   
-  // 弾と敵の衝突判定（既に実装済み）
+  // 弾と敵の衝突判定
   for (let i = bullets.length - 1; i >= 0; i--) {
     const bullet = bullets[i];
     for (let j = enemies.length - 1; j >= 0; j--) {
       const enemy = enemies[j];
-      if (
-        bullet.x < enemy.x + enemy.width &&
-        bullet.x + bullet.width > enemy.x &&
-        bullet.y < enemy.y + enemy.height &&
-        bullet.y + bullet.height > enemy.y
-      ) {
-        // 衝突発生
+      if (isColliding(bullet, enemy)) {
         enemy.hp -= bullet.power;
         bullets.splice(i, 1);
-        
         if (enemy.hp <= 0) {
-          // 敵の撃破
           score += enemy.score;
           createExplosion(
             enemy.x + enemy.width / 2,
@@ -765,8 +695,6 @@ function checkCollisions() {
             enemy.type === "zigzag" ? enemy.currentColor : "#ffcc00"
           );
           enemies.splice(j, 1);
-          
-          // レベルアップ
           if (score >= level * 20 && level < 5) {
             level++;
             startEnemyGeneration();
@@ -777,16 +705,11 @@ function checkCollisions() {
     }
   }
   
-  // プレイヤーと敵の衝突判定
+  // プレイヤーと敵、及び敵の弾との衝突判定（無敵中は判定しない）
   if (!playerInvincible) {
     for (let i = enemies.length - 1; i >= 0; i--) {
       const enemy = enemies[i];
-      if (
-        player.x < enemy.x + enemy.width &&
-        player.x + player.width > enemy.x &&
-        player.y < enemy.y + enemy.height &&
-        player.y + player.height > enemy.y
-      ) {
+      if (isColliding(player, enemy)) {
         lives--;
         createExplosion(
           player.x + player.width / 2,
@@ -795,7 +718,7 @@ function checkCollisions() {
           20
         );
         playerInvincible = true;
-        invincibleTimer = 120; // 約2秒間の無敵（60fpsの場合）
+        invincibleTimer = 120;
         enemies.splice(i, 1);
         if (lives <= 0) {
           gameOver = true;
@@ -804,16 +727,9 @@ function checkCollisions() {
         }
       }
     }
-  
-    // プレイヤーと敵の弾の衝突判定
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
       const bullet = enemyBullets[i];
-      if (
-        player.x < bullet.x + bullet.width &&
-        player.x + player.width > bullet.x &&
-        player.y < bullet.y + bullet.height &&
-        player.y + player.height > bullet.y
-      ) {
+      if (isColliding(player, bullet)) {
         lives--;
         createExplosion(
           player.x + player.width / 2,
@@ -836,15 +752,9 @@ function checkCollisions() {
   // プレイヤーとパワーアップの衝突判定
   for (let i = powerups.length - 1; i >= 0; i--) {
     const powerup = powerups[i];
-    if (
-      player.x < powerup.x + powerup.width &&
-      player.x + player.width > powerup.x &&
-      player.y < powerup.y + powerup.height &&
-      player.y + player.height > powerup.y
-    ) {
-      // パワーアップ取得
+    if (isColliding(player, powerup)) {
       playerPowerupType = powerup.type;
-      powerupTimer = 600; // 例：約10秒間持続（60fps換算）
+      powerupTimer = 600;
       let pu = powerupTypes.find(p => p.name === powerup.type);
       if (pu) {
         showPowerupNotification(pu.text);
@@ -854,7 +764,6 @@ function checkCollisions() {
   }
 }
 
-// 一時停止の切替
 function togglePause() {
   gamePaused = !gamePaused;
   if (!gamePaused) {
@@ -862,13 +771,12 @@ function togglePause() {
   }
 }
 
-// タッチ操作ハンドラ（開始）
 function handleTouchStart(e) {
   e.preventDefault();
   for (let touch of e.changedTouches) {
     let rect = canvas.getBoundingClientRect();
     let touchY = touch.clientY - rect.top;
-    // キャンバス上部80%は発射、下部20%は移動
+    // キャンバス上部80％は発射、下部20％は移動
     if (touchY > canvas.height * 0.8) {
       movementTouchId = touch.identifier;
     } else {
@@ -877,7 +785,6 @@ function handleTouchStart(e) {
   }
 }
 
-// タッチ操作ハンドラ（移動）
 function handleTouchMove(e) {
   e.preventDefault();
   for (let touch of e.changedTouches) {
@@ -891,7 +798,6 @@ function handleTouchMove(e) {
   }
 }
 
-// タッチ操作ハンドラ（終了）
 function handleTouchEnd(e) {
   e.preventDefault();
   for (let touch of e.changedTouches) {
@@ -901,7 +807,6 @@ function handleTouchEnd(e) {
   }
 }
 
-// パワーアップ通知の表示
 function showPowerupNotification(text) {
   const notification = document.getElementById("powerupNotification");
   notification.textContent = text;
@@ -911,13 +816,10 @@ function showPowerupNotification(text) {
   }, 2000);
 }
 
-// ゲームオーバー時の処理
 function endGame() {
   gamePaused = true;
-  // 敵とパワーアップの生成タイマーを停止
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
-  // オーバーレイに「Game Over」を表示
   const overlay = document.getElementById("overlay");
   overlay.innerHTML = `
     <div class="instructions">
@@ -933,17 +835,12 @@ function endGame() {
   });
 }
 
-// ゲームクリア時に「イマドコ」カードを表示
 function showLocationCard() {
   gamePaused = true;
-  // 敵とパワーアップの生成タイマーを停止
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
-  
   const locationCard = document.getElementById("locationCard");
   locationCard.style.display = "flex";
-  
-  // 例として固定の位置情報と現在時刻を表示（実際はGeolocation APIなどで取得も可能）
   document.getElementById("status").textContent = "大阪市中央区";
   document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
 }
