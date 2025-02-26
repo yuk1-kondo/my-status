@@ -1,99 +1,40 @@
-body {
+html, body {
   margin: 0;
-  background-color: #000;
-  font-family: Arial, sans-serif;
-  color: #fff;
-}
-
-canvas {
-  display: block;
-  margin: 0 auto;
-  background-color: #000;
-}
-
-/* オーバーレイ・スタート画面 */
-#overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
+  padding: 0;
+  background: #121212; /* ダークテーマ */
+  background: #121212;
+  color: #ffffff;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.8);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-  /* セーフエリア用パディング */
-  padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
-}
+@@ -17,7 +17,7 @@ html, body {
 
-#overlay h1 {
-  margin: 0;
-  font-size: 28px;
-  text-align: center;
-}
-
-/* ゲーム説明 */
-#gameExplanation {
-  margin: 20px 0;
-  text-align: center;
-  line-height: 1.5;
-  font-size: 16px;
-  max-width: 90%;
-}
-
-#startBtn {
-  padding: 10px 20px;
-  font-size: 18px;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-/* ゲームHUD */
-#gameHUD {
-  display: none;
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 5;
-}
-
-/* イマココカード（レスポンシブ対応＆内側余白調整） */
-#locationCard {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.9);
-  padding: 20px;
-  border: 2px solid #ffffff;
-  border-radius: 10px;
-  color: #fff;
-  width: 90%;
-  max-width: 400px;
-  box-sizing: border-box;
-  display: none;
-  z-index: 20;
-}
-
-#locationCard h2 {
+/* キャンバススタイル */
+canvas {
+  background: linear-gradient(to bottom, #05071b, #0d1331); /* 宇宙風グラデーション */
+  background: linear-gradient(to bottom, #05071b, #0d1331);
+  display: block;
+  touch-action: none;
+  border: 2px solid #4a5eff;
+@@ -78,6 +78,22 @@ canvas {
   margin-top: 0;
 }
 
-#locationCard p {
-  margin: 10px 0;
+/* レスポンシブ調整（スマホ向け） */
+@media (max-width: 768px) {
+  #overlay {
+    padding: 10px;
+  }
+  .instructions {
+    font-size: 16px;
+    padding: 15px;
+    max-width: 90%;
+  }
+  #overlay button {
+    font-size: 24px;
+    padding: 10px 20px;
+  }
 }
 
-/* パワーアップ通知 */
-#powerupNotification {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.7);
-  padding: 10px 20px;
-  border-radius: 5px;
+/* クリア後の「イマドコ」カード */
+#locationCard {
   display: none;
-  z-index: 15;
-}
