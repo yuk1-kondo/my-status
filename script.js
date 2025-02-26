@@ -1,5 +1,5 @@
 // 定数・グローバル変数
-const targetScore = 10; // ゲームクリア条件
+const targetScore = 100; // ゲームクリア条件
 let canvas, ctx;
 let player, bullets, enemies, powerups;
 let score, lives, level;
@@ -228,9 +228,10 @@ document.addEventListener("DOMContentLoaded", () => {
     initGame();
   });
   
-  // リスタートボタン
-  if (document.getElementById("restartBtn")) {
-    document.getElementById("restartBtn").addEventListener("click", () => {
+  // 初回リスタートボタン（locationCard内の「もう一度プレイ」）も設定
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    restartBtn.addEventListener("click", () => {
       document.getElementById("locationCard").style.display = "none";
       document.getElementById("gameHUD").style.display = "block";
       initGame();
@@ -265,29 +266,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function setCanvasSize() {
   const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
-  
-  // ウィンドウのサイズを取得（iOS Safariのアドレスバー等を考慮）
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
   
   if (isMobile) {
-    // モバイルの場合は画面いっぱいに（但し最大高さを制限）
     canvas.width = windowWidth;
-    canvas.height = Math.min(windowHeight, windowWidth * 1.6); // アスペクト比の制限
+    canvas.height = Math.min(windowHeight, windowWidth * 1.6);
   } else {
-    // PCの場合は適切なサイズに
     canvas.width = Math.min(windowWidth, 640);
     canvas.height = Math.min(windowHeight, 480);
   }
   
-  // 位置も中央に調整
   if (canvas.height < windowHeight) {
     canvas.style.top = ((windowHeight - canvas.height) / 2) + "px";
   } else {
     canvas.style.top = "0";
   }
   
-  // すでにゲームが開始されていれば位置調整
   if (player) {
     player.x = Math.min(player.x, canvas.width - player.width);
     player.y = canvas.height - 40;
@@ -331,7 +326,6 @@ function initGame() {
 
   startEnemyGeneration();
   powerupInterval = setInterval(spawnPowerup, 15000);
-
   gameLoop();
 }
 
@@ -343,7 +337,6 @@ function updateHUD() {
 
 function gameLoop() {
   if (gamePaused || gameOver || gameClear) return;
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   updatePlayer();
   updateBullets();
@@ -369,7 +362,6 @@ function updatePlayer() {
   if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
   ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
   
-  // シールド効果（緑のリング表示）
   if (playerPowerupType === "shield") {
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = 3;
@@ -436,7 +428,11 @@ function spawnEnemyBullet(enemy) {
   const enemyCenterY = enemy.y + enemy.height;
   const playerCenterX = player.x + player.width / 2;
   const playerCenterY = player.y + player.height / 2;
-  const angle = Math.atan2(playerCenterY - enemyCenterY, playerCenterX - enemyCenterX);
+  // 垂直差が小さい場合、最低値を与えて真横発射を防止
+  let vDiff = playerCenterY - enemyCenterY;
+  if (vDiff < 10) vDiff = 10;
+  const hDiff = playerCenterX - enemyCenterX;
+  const angle = Math.atan2(vDiff, hDiff);
   
   enemyBullets.push({
     x: enemyCenterX - 2.5,
@@ -455,14 +451,10 @@ function updateEnemyBullets() {
     let bullet = enemyBullets[i];
     bullet.x += bullet.dx;
     bullet.y += bullet.dy;
-    
-    // 画面外に出たら削除
     if (bullet.y > canvas.height || bullet.y < 0 || bullet.x > canvas.width || bullet.x < 0) {
       enemyBullets.splice(i, 1);
       continue;
     }
-    
-    // 描画
     ctx.fillStyle = bullet.color;
     ctx.beginPath();
     ctx.arc(bullet.x + bullet.width / 2, bullet.y + bullet.height / 2, bullet.width / 2, 0, Math.PI * 2);
@@ -472,15 +464,11 @@ function updateEnemyBullets() {
 
 function startEnemyGeneration() {
   if (enemyInterval) clearInterval(enemyInterval);
-  
-  // レベルに応じて敵の出現間隔を調整
   const baseInterval = 1500 - (level * 150);
-  const interval = Math.max(baseInterval, 500); // 最小間隔は500ms
+  const interval = Math.max(baseInterval, 500);
   
   enemyInterval = setInterval(() => {
     if (gamePaused || gameOver || gameClear) return;
-    
-    // 敵の種類をランダムに決定
     const rand = Math.random();
     if (rand < 0.2) {
       spawnEnemy("gray");
@@ -512,7 +500,6 @@ function spawnEnemy(type) {
   } else if (type === "orange") {
     enemy.speed = 2 + Math.random() * 1;
     enemy.score = -5;
-    // オレンジの敵は時々弾を撃つ
     if (Math.random() < 0.3) {
       enemy.canShoot = true;
       enemy.shootInterval = 100 + Math.floor(Math.random() * 50);
@@ -555,7 +542,6 @@ function updateEnemies() {
       continue;
     }
     
-    // 敵の描画
     if (enemy.type === "gray" || enemy.type === "orange") {
       ctx.drawImage(sprites.enemies[enemy.type], enemy.x, enemy.y, enemy.width, enemy.height);
     } else if (enemy.type === "zigzag") {
@@ -567,7 +553,6 @@ function updateEnemies() {
       ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height / 2);
       ctx.closePath();
       ctx.fill();
-      // 目
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(enemy.x + enemy.width / 2 - 3, enemy.y + enemy.height / 2, 2, 0, Math.PI * 2);
@@ -581,7 +566,6 @@ function updateEnemies() {
 
 function spawnPowerup() {
   if (gamePaused || gameOver || gameClear) return;
-  
   const width = 20;
   const height = 20;
   const type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
@@ -671,7 +655,6 @@ function isColliding(a, b) {
 }
 
 function checkCollisions() {
-  // プレイヤーの無敵時間を更新
   if (playerInvincible) {
     invincibleTimer--;
     if (invincibleTimer <= 0) {
@@ -705,7 +688,7 @@ function checkCollisions() {
     }
   }
   
-  // プレイヤーと敵、及び敵の弾との衝突判定（無敵中は判定しない）
+  // プレイヤーと敵および敵の弾との衝突（無敵中は判定しない）
   if (!playerInvincible) {
     for (let i = enemies.length - 1; i >= 0; i--) {
       const enemy = enemies[i];
@@ -776,7 +759,6 @@ function handleTouchStart(e) {
   for (let touch of e.changedTouches) {
     let rect = canvas.getBoundingClientRect();
     let touchY = touch.clientY - rect.top;
-    // キャンバス上部80％は発射、下部20％は移動
     if (touchY > canvas.height * 0.8) {
       movementTouchId = touch.identifier;
     } else {
@@ -843,4 +825,10 @@ function showLocationCard() {
   locationCard.style.display = "flex";
   document.getElementById("status").textContent = "大阪市中央区";
   document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
+  // locationCard内のリスタートボタンにイベントを設定
+  document.getElementById("restartBtn").addEventListener("click", () => {
+    locationCard.style.display = "none";
+    document.getElementById("gameHUD").style.display = "block";
+    initGame();
+  });
 }
