@@ -1,159 +1,82 @@
-/* グローバルスタイル */
-html, body {
+body {
   margin: 0;
-  padding: 0;
-  background: #121212;
-  color: #ffffff;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  box-sizing: border-box;
-  font-family: 'Arial Rounded MT Bold', 'Hiragino Maru Gothic ProN', sans-serif;
+  background-color: #000;
+  font-family: Arial, sans-serif;
+  color: #fff;
 }
 
-/* キャンバススタイル */
 canvas {
-  background: linear-gradient(to bottom, #05071b, #0d1331);
   display: block;
-  touch-action: none;
-  border: 2px solid #4a5eff;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(74, 94, 255, 0.5);
+  margin: 0 auto;
+  background-color: #000;
 }
 
-/* オーバーレイ（スタート画面） */
+/* オーバーレイ・スタート画面 */
 #overlay {
   position: fixed;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(18, 18, 18, 0.9), rgba(30, 30, 50, 0.95));
+  background: rgba(0,0,0,0.8);
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  flex-direction: column;
   z-index: 10;
-  padding: 20px;
-  box-sizing: border-box;
 }
-#overlay button {
-  background: linear-gradient(to bottom, #ff5e00, #ff3300);
-  color: #ffffff;
-  padding: 12px 25px;
-  font-size: 28px;
-  border: none;
+
+#startBtn {
+  padding: 10px 20px;
+  font-size: 18px;
   cursor: pointer;
   margin-top: 20px;
-  border-radius: 50px;
-  box-shadow: 0 5px 15px rgba(255, 94, 0, 0.4);
-  transition: all 0.2s ease;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
-#overlay button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 7px 20px rgba(255, 94, 0, 0.6);
+
+/* ゲームHUD */
+#gameHUD {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
 }
-.instructions {
-  text-align: left;
-  max-width: 600px;
-  margin: 0 auto 20px;
-  line-height: 1.6;
-  font-size: 18px;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.5);
+
+/* イマココカード（レスポンシブ対応＆内側余白調整） */
+#locationCard {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
   padding: 20px;
+  border: 2px solid #ffffff;
   border-radius: 10px;
-  border: 1px solid #4a5eff;
+  color: #fff;
+  width: 90%;
+  max-width: 400px;
+  box-sizing: border-box;
+  display: none;
+  z-index: 20;
 }
-.instructions h2 {
-  text-align: center;
-  color: #ff5e00;
-  text-shadow: 0 0 10px rgba(255, 94, 0, 0.5);
+
+#locationCard h2 {
   margin-top: 0;
 }
 
-/* レスポンシブ調整（スマホ向け） */
-@media (max-width: 768px) {
-  #overlay {
-    padding: 10px;
-  }
-  .instructions {
-    font-size: 16px;
-    padding: 15px;
-    max-width: 90%;
-  }
-  #overlay button {
-    font-size: 24px;
-    padding: 10px 20px;
-  }
-}
-
-/* クリア後の「イマドコ」カード */
-#locationCard {
-  display: none;
-  background: linear-gradient(135deg, #1e2761, #482880);
-  color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 400px;
-  margin: 20px auto;
-  box-shadow: 0 0 20px rgba(74, 94, 255, 0.5);
-  animation: cardAppear 0.5s ease-out;
-  border: 2px solid #4a5eff;
-}
-@keyframes cardAppear {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-/* ゲーム内HUD */
-#gameHUD {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 12px;
-  border-radius: 8px;
-  border: 2px solid #4a5eff;
-  color: #ffffff;
-  font-size: 18px;
-  display: none;
-  box-shadow: 0 0 10px rgba(74, 94, 255, 0.5);
-  font-weight: bold;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-}
-#scoreDisplay {
-  color: #ffffff;
-  font-size: 20px;
-}
-#livesDisplay {
-  color: #ff5e00;
-}
-#levelDisplay {
-  color: #4a5eff;
+#locationCard p {
+  margin: 10px 0;
 }
 
 /* パワーアップ通知 */
 #powerupNotification {
-  position: absolute;
-  top: 50%;
+  position: fixed;
+  bottom: 20px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffff00;
-  padding: 15px;
-  border-radius: 10px;
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  padding: 10px 20px;
+  border-radius: 5px;
   display: none;
-  z-index: 5;
-  text-shadow: 0 0 5px #ff5e00;
+  z-index: 15;
 }
