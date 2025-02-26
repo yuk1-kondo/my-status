@@ -227,6 +227,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("gameHUD").style.display = "block";
     initGame();
   });
+  
+  // リスタートボタン
+  if (document.getElementById("restartBtn")) {
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      document.getElementById("locationCard").style.display = "none";
+      document.getElementById("gameHUD").style.display = "block";
+      initGame();
+    });
+  }
 
   // キーボード操作
   document.addEventListener("keydown", (e) => {
@@ -242,19 +251,46 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // タッチ操作
-  canvas.addEventListener("touchstart", handleTouchStart);
-  canvas.addEventListener("touchmove", handleTouchMove);
-  canvas.addEventListener("touchend", handleTouchEnd);
+  canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+  canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+  canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
+  
+  // iOS用のスクロール防止
+  document.body.addEventListener('touchmove', function(e) {
+    if (e.target === canvas) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 });
 
 function setCanvasSize() {
-  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+  
+  // ウィンドウのサイズを取得（iOS Safariのアドレスバー等を考慮）
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
   if (isMobile) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // モバイルの場合は画面いっぱいに（但し最大高さを制限）
+    canvas.width = windowWidth;
+    canvas.height = Math.min(windowHeight, windowWidth * 1.6); // アスペクト比の制限
   } else {
-    canvas.width = Math.min(window.innerWidth, 640);
-    canvas.height = Math.min(window.innerHeight, 480);
+    // PCの場合は適切なサイズに
+    canvas.width = Math.min(windowWidth, 640);
+    canvas.height = Math.min(windowHeight, 480);
+  }
+  
+  // 位置も中央に調整
+  if (canvas.height < windowHeight) {
+    canvas.style.top = ((windowHeight - canvas.height) / 2) + "px";
+  } else {
+    canvas.style.top = "0";
+  }
+  
+  // すでにゲームが開始されていれば位置調整
+  if (player) {
+    player.x = Math.min(player.x, canvas.width - player.width);
+    player.y = canvas.height - 40;
   }
 }
 
@@ -400,317 +436,4 @@ function spawnEnemyBullet(enemy) {
   const enemyCenterY = enemy.y + enemy.height;
   const playerCenterX = player.x + player.width / 2;
   const playerCenterY = player.y + player.height / 2;
-  const angle = Math.atan2(playerCenterY - enemyCenterY, playerCenterX - enemyCenterX);
-  enemyBullets.push({
-    x: enemyCenterX - 2.5,
-    y: enemyCenterY,
-    width: 5,
-    height: 10,
-    dx: Math.cos(angle) * bulletSpeed,
-    dy: Math.sin(angle) * bulletSpeed
-  });
-}
-
-function updateEnemyBullets() {
-  for (let i = enemyBullets.length - 1; i >= 0; i--) {
-    let bullet = enemyBullets[i];
-    bullet.x += bullet.dx;
-    bullet.y += bullet.dy;
-    if (bullet.y > canvas.height || bullet.x < 0 || bullet.x > canvas.width) {
-      enemyBullets.splice(i, 1);
-      continue;
-    }
-    ctx.fillStyle = "#ff0000";
-    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-  }
-}
-
-function spawnEnemy() {
-  if (gameOver || gameClear || gamePaused) return;
-  const levelMultiplier = 1 + (level - 1) * 0.1;
-  const grayProb = 0.2 * levelMultiplier;
-  const orangeProb = grayProb * 2;
-  const zigzagProb = grayProb * 3;
-  const totalProb = grayProb + orangeProb + zigzagProb;
-  const r = Math.random() * totalProb;
-  if (r < grayProb) {
-    spawnGrayEnemy();
-  } else if (r < grayProb + orangeProb) {
-    spawnOrangeEnemy();
-  } else {
-    spawnZigzagEnemy();
-  }
-}
-
-function spawnGrayEnemy() {
-  enemies.push({
-    type: "gray",
-    x: Math.random() * (canvas.width - 20),
-    y: 0,
-    width: 20,
-    height: 20,
-    speed: 1.5 + (level - 1) * 0.2,
-    hp: 1
-  });
-}
-
-function spawnOrangeEnemy() {
-  enemies.push({
-    type: "orange",
-    x: Math.random() * (canvas.width - 20),
-    y: 0,
-    width: 20,
-    height: 20,
-    speed: 2 + (level - 1) * 0.3,
-    hp: 1
-  });
-}
-
-function spawnZigzagEnemy() {
-  const movePattern = Math.floor(Math.random() * 3);
-  const color = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
-  enemies.push({
-    type: "zigzag",
-    x: Math.random() * (canvas.width - 20),
-    y: 0,
-    width: 20,
-    height: 20,
-    speed: 2 + (level - 1) * 0.3,
-    hp: 1,
-    movePattern: movePattern,
-    color: color,
-    direction: Math.random() < 0.5 ? -1 : 1,
-    shootCooldown: Math.floor(Math.random() * 100 + 100)
-  });
-}
-
-function updateEnemies() {
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    let enemy = enemies[i];
-    enemy.y += enemy.speed;
-    if (enemy.type === "zigzag") {
-      enemy.x += enemy.direction * 2;
-      if (enemy.x < 0 || enemy.x + enemy.width > canvas.width) enemy.direction *= -1;
-      enemy.shootCooldown--;
-      if (enemy.shootCooldown <= 0 && player) {
-        if (Math.random() < 0.3) {
-          spawnEnemyBullet(enemy);
-        }
-        enemy.shootCooldown = Math.floor(Math.random() * 100 + 100);
-      }
-      ctx.fillStyle = enemy.color;
-      ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-    } else if (enemy.type === "gray") {
-      ctx.drawImage(sprites.enemies.gray, enemy.x, enemy.y, enemy.width, enemy.height);
-    } else if (enemy.type === "orange") {
-      ctx.drawImage(sprites.enemies.orange, enemy.x, enemy.y, enemy.width, enemy.height);
-    }
-    if (enemy.y > canvas.height) {
-      enemies.splice(i, 1);
-      continue;
-    }
-  }
-}
-
-function spawnPowerup() {
-  if (gameOver || gameClear || gamePaused) return;
-  const type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
-  powerups.push({
-    x: Math.random() * (canvas.width - 20),
-    y: 0,
-    width: 20,
-    height: 20,
-    speed: 1,
-    type: type.name,
-    color: type.color,
-    text: type.text,
-    rotation: 0
-  });
-}
-
-function updatePowerups() {
-  for (let i = powerups.length - 1; i >= 0; i--) {
-    let powerup = powerups[i];
-    powerup.y += powerup.speed;
-    if (powerup.y > canvas.height) {
-      powerups.splice(i, 1);
-      continue;
-    }
-    ctx.save();
-    ctx.translate(powerup.x + powerup.width / 2, powerup.y + powerup.height / 2);
-    ctx.rotate(powerup.rotation);
-    ctx.drawImage(sprites.powerups[powerup.type], -powerup.width / 2, -powerup.height / 2, powerup.width, powerup.height);
-    ctx.restore();
-    powerup.rotation += 0.05;
-  }
-}
-
-function updateParticles() {
-  // パーティクルエフェクト実装（必要に応じて）
-}
-
-function checkCollisions() {
-  // 弾と敵の衝突判定
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    let bullet = bullets[i];
-    for (let j = enemies.length - 1; j >= 0; j--) {
-      let enemy = enemies[j];
-      if (bullet.x < enemy.x + enemy.width &&
-          bullet.x + bullet.width > enemy.x &&
-          bullet.y < enemy.y + enemy.height &&
-          bullet.y + bullet.height > enemy.y) {
-        enemies.splice(j, 1);
-        bullets.splice(i, 1);
-        score += enemy.type === "gray" ? 10 : enemy.type === "orange" ? -5 : -10;
-        break;
-      }
-    }
-  }
-  
-  // 敵とプレイヤーの衝突判定
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    let enemy = enemies[i];
-    if (player.x < enemy.x + enemy.width &&
-        player.x + player.width > enemy.x &&
-        player.y < enemy.y + enemy.height &&
-        player.y + player.height > enemy.y) {
-      enemies.splice(i, 1);
-      if (playerPowerupType !== "shield") {
-        lives--;
-        if (lives <= 0) {
-          gameOver = true;
-          alert("Game Over");
-        }
-      }
-    }
-  }
-  
-  // 敵弾とプレイヤーの衝突判定
-  for (let i = enemyBullets.length - 1; i >= 0; i--) {
-    let bullet = enemyBullets[i];
-    if (bullet.x < player.x + player.width &&
-        bullet.x + bullet.width > player.x &&
-        bullet.y < player.y + player.height &&
-        bullet.y + bullet.height > player.y) {
-      enemyBullets.splice(i, 1);
-      if (playerPowerupType !== "shield") {
-        lives--;
-        if (lives <= 0) {
-          gameOver = true;
-          alert("Game Over");
-        }
-      }
-    }
-  }
-  
-  // パワーアップアイテム取得判定
-  for (let i = powerups.length - 1; i >= 0; i--) {
-    let powerup = powerups[i];
-    if (player.x < powerup.x + powerup.width &&
-        player.x + player.width > powerup.x &&
-        player.y < powerup.y + powerup.height &&
-        player.y + player.height > powerup.y) {
-      playerPowerupType = powerup.type;
-      powerupTimer = 500;
-      powerups.splice(i, 1);
-      showPowerupNotification(powerup.text);
-    }
-  }
-}
-
-function showPowerupNotification(text) {
-  const notification = document.getElementById("powerupNotification");
-  notification.textContent = text;
-  notification.style.display = "block";
-  setTimeout(() => {
-    notification.style.display = "none";
-  }, 2000);
-}
-
-function startEnemyGeneration() {
-  if (enemyInterval) clearInterval(enemyInterval);
-  const baseInterval = 1500;
-  const intervalReduction = 100 * (level - 1);
-  const interval = Math.max(baseInterval - intervalReduction, 800);
-  enemyInterval = setInterval(spawnEnemy, interval);
-}
-
-function togglePause() {
-  if (gameOver || gameClear) return;
-  gamePaused = !gamePaused;
-  if (gamePaused) {
-    cancelAnimationFrame(gameLoopId);
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "30px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("PAUSE", canvas.width / 2, canvas.height / 2);
-    ctx.font = "16px Arial";
-    ctx.fillText("Press P to resume", canvas.width / 2, canvas.height / 2 + 40);
-  } else {
-    gameLoop();
-  }
-}
-
-// タッチ操作
-function handleTouchStart(e) {
-  if (gamePaused) {
-    togglePause();
-    e.preventDefault();
-    return;
-  }
-  const rect = canvas.getBoundingClientRect();
-  for (let i = 0; i < e.changedTouches.length; i++) {
-    const touch = e.changedTouches[i];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    if (y >= canvas.height * 0.8) {
-      if (movementTouchId === null) {
-        movementTouchId = touch.identifier;
-        player.dx = x < canvas.width / 2 ? -player.speed : player.speed;
-      }
-    } else {
-      shoot();
-    }
-  }
-  e.preventDefault();
-}
-
-function handleTouchMove(e) {
-  const rect = canvas.getBoundingClientRect();
-  for (let i = 0; i < e.changedTouches.length; i++) {
-    const touch = e.changedTouches[i];
-    if (touch.identifier === movementTouchId) {
-      const x = touch.clientX - rect.left;
-      player.dx = x < canvas.width / 2 ? -player.speed : player.speed;
-    }
-  }
-  e.preventDefault();
-}
-
-function handleTouchEnd(e) {
-  for (let i = 0; i < e.changedTouches.length; i++) {
-    const touch = e.changedTouches[i];
-    if (touch.identifier === movementTouchId) {
-      player.dx = 0;
-      movementTouchId = null;
-    }
-  }
-  e.preventDefault();
-}
-
-// ゲームクリア時のイマココ表示（location.jsonを取得）
-function showLocationCard() {
-  fetch('location.json')
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById("status").textContent = data.status;
-      document.getElementById("lastUpdated").textContent = data.last_updated;
-      document.getElementById("locationCard").style.display = "block";
-    })
-    .catch(error => {
-      console.error("Error fetching location.json: ", error);
-      document.getElementById("locationCard").style.display = "block";
-    });
-}
+  const angle = Math.atan2(playerCenter
