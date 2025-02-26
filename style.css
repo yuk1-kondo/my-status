@@ -1,20 +1,18 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #121212; /* ダークテーマ */
+  background: #121212;
   color: #ffffff;
   width: 100%;
   height: 100%;
-  overflow: hidden; /* スクロールを防止 */
+  overflow: hidden;
   font-family: Arial, sans-serif;
-  position: fixed; /* モバイル用にスクロールを完全に防止 */
-  top: 0;
-  left: 0;
+  position: relative; /* fixed → relative に変更 */
 }
 
 /* キャンバススタイル */
 canvas {
-  background: linear-gradient(to bottom, #05071b, #0d1331); /* 宇宙風グラデーション */
+  background: linear-gradient(to bottom, #05071b, #0d1331);
   display: block;
   touch-action: none;
   border: 2px solid #4a5eff;
@@ -24,7 +22,7 @@ canvas {
   left: 0;
 }
 
-/* ゲームHUD */
+/* ゲームHUD（スコア・残機・レベル） */
 #gameHUD {
   position: absolute;
   top: 10px;
@@ -34,6 +32,15 @@ canvas {
   border-radius: 5px;
   font-size: 18px;
   display: none;
+  z-index: 100; /* canvasより上に表示 */
+}
+
+/* オプション：iOSの安全域対応 */
+@supports(padding: max(0px)) {
+  #gameHUD {
+    padding-top: calc(5px + env(safe-area-inset-top));
+    padding-left: calc(10px + env(safe-area-inset-left));
+  }
 }
 
 /* パワーアップ通知 */
