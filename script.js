@@ -283,8 +283,9 @@ function setCanvasSize() {
     canvas.style.top = "0";
   }
   
-  // canvasのスタイルで水平中央配置（CSSのtransformと連携）
-  canvas.style.left = "50%";
+  // キャンバスを水平中央に配置するために transform を追加
+canvas.style.left = "50%";
+canvas.style.transform = "translateX(-50%)";
   
   if (player) {
     player.x = Math.min(player.x, canvas.width - player.width);
