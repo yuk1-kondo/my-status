@@ -450,17 +450,23 @@ function spawnEnemyBullet(enemy) {
   let vDiff = playerCenterY - enemyCenterY;
   if (vDiff < 10) vDiff = 10;
   const hDiff = playerCenterX - enemyCenterX;
-  const angle = Math.atan2(vDiff, hDiff);
-  
-  enemyBullets.push({
-    x: enemyCenterX - 2.5,
-    y: enemyCenterY,
-    width: 5,
-    height: 5,
-    speed: bulletSpeed,
-    dx: Math.cos(angle) * bulletSpeed,
-    dy: Math.sin(angle) * bulletSpeed,
-    color: "#ff3333"
+  const baseAngle = Math.atan2(vDiff, hDiff);
+
+  // 角度のオフセット（ラジアン単位）を定義：真ん中、左、右
+  const angleOffsets = [0, -0.2, 0.2];
+
+  angleOffsets.forEach(offset => {
+    const angle = baseAngle + offset;
+    enemyBullets.push({
+      x: enemyCenterX - 2.5,
+      y: enemyCenterY,
+      width: 5,
+      height: 5,
+      speed: bulletSpeed,
+      dx: Math.cos(angle) * bulletSpeed,
+      dy: Math.sin(angle) * bulletSpeed,
+      color: "#ff3333"
+    });
   });
 }
 
