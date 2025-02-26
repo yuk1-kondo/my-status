@@ -2,39 +2,199 @@ html, body {
   margin: 0;
   padding: 0;
   background: #121212; /* ダークテーマ */
-  background: #121212;
   color: #ffffff;
   width: 100%;
   height: 100%;
-@@ -17,7 +17,7 @@ html, body {
+  overflow: hidden; /* スクロールを防止 */
+  font-family: Arial, sans-serif;
+  position: fixed; /* モバイル用にスクロールを完全に防止 */
+  top: 0;
+  left: 0;
+}
 
 /* キャンバススタイル */
 canvas {
   background: linear-gradient(to bottom, #05071b, #0d1331); /* 宇宙風グラデーション */
-  background: linear-gradient(to bottom, #05071b, #0d1331);
   display: block;
   touch-action: none;
   border: 2px solid #4a5eff;
-@@ -78,6 +78,22 @@ canvas {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* ゲームHUD */
+#gameHUD {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 18px;
+  display: none;
+}
+
+/* パワーアップ通知 */
+#powerupNotification {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #00ffff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 0 0 5px #00ffff;
+  display: none;
+}
+
+/* ゲーム説明オーバーレイ */
+#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+/* 説明テキスト */
+.instructions {
+  background-color: rgba(0, 0, 40, 0.7);
+  border: 2px solid #4a5eff;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 0 10px;
+  max-width: 600px;
+  text-align: left;
+  max-height: 70vh;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.instructions h2 {
+  text-align: center;
+  color: #4a5eff;
   margin-top: 0;
 }
 
-/* レスポンシブ調整（スマホ向け） */
-@media (max-width: 768px) {
-  #overlay {
-    padding: 10px;
-  }
-  .instructions {
-    font-size: 16px;
-    padding: 15px;
-    max-width: 90%;
-  }
-  #overlay button {
-    font-size: 24px;
-    padding: 10px 20px;
-  }
+/* ボタン */
+#startBtn, #restartBtn {
+  background: linear-gradient(to bottom, #4a5eff, #2233cc);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(74, 94, 255, 0.5);
+  transition: all 0.2s;
+}
+
+#startBtn:hover, #restartBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(74, 94, 255, 0.8);
+}
+
+#startBtn:active, #restartBtn:active {
+  transform: scale(0.98);
 }
 
 /* クリア後の「イマドコ」カード */
 #locationCard {
   display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#locationCard .card {
+  background-color: rgba(0, 0, 40, 0.7);
+  border: 2px solid #4a5eff;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  width: 80%;
+  max-width: 400px;
+}
+
+#locationCard h1 {
+  color: #4a5eff;
+  margin-top: 0;
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 768px) {
+  #overlay {
+    padding: 10px 0;
+  }
+  
+  .instructions {
+    font-size: 16px;
+    padding: 15px;
+    max-width: 90%;
+    max-height: 60vh;
+  }
+  
+  #overlay button, #locationCard button {
+    font-size: 20px;
+    padding: 12px 24px;
+    margin-top: 10px;
+  }
+  
+  #gameHUD {
+    font-size: 14px;
+    padding: 3px 6px;
+  }
+
+  #powerupNotification {
+    font-size: 18px;
+    padding: 8px 16px;
+  }
+  
+  #locationCard .card {
+    padding: 15px;
+    width: 85%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+/* iPhone SE などの小さい画面用 */
+@media (max-width: 375px) {
+  .instructions {
+    font-size: 14px;
+    padding: 10px;
+    max-height: 50vh;
+  }
+  
+  #startBtn, #restartBtn {
+    font-size: 18px;
+    padding: 10px 20px;
+  }
+  
+  #locationCard .card {
+    padding: 10px;
+    width: 90%;
+  }
+}
