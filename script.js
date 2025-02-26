@@ -26,10 +26,9 @@ let sprites = {
   powerups: {},
   explosions: []
 };
-// 敵の弾用
 let enemyBullets = [];
 
-/* スプライト画像の生成 */
+// スプライト画像の生成
 function loadGameAssets() {
   // プレイヤー用スプライト
   sprites.player = document.createElement('canvas');
@@ -214,7 +213,6 @@ function loadGameAssets() {
   }
 }
 
-/* DOMContentLoaded時の初期化 */
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("gameCanvas");
   ctx = canvas.getContext("2d");
@@ -228,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initGame();
   });
   
-  // 初回リスタートボタン（locationCard内の「もう一度プレイ」）も設定
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
     restartBtn.addEventListener("click", () => {
@@ -238,7 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // キーボード操作
   document.addEventListener("keydown", (e) => {
     if (!player) return;
     if (e.key === "ArrowLeft") player.dx = -player.speed;
@@ -251,12 +247,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
   });
 
-  // タッチ操作
   canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
   canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
   canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
   
-  // iOS用のスクロール防止
   document.body.addEventListener('touchmove', function(e) {
     if (e.target === canvas) {
       e.preventDefault();
@@ -281,6 +275,14 @@ function setCanvasSize() {
     canvas.style.top = ((windowHeight - canvas.height) / 2) + "px";
   } else {
     canvas.style.top = "0";
+  }
+  
+  // canvas の配置に合わせて HUD の位置も更新
+  const gameHUD = document.getElementById("gameHUD");
+  if (gameHUD) {
+    const canvasTop = parseInt(canvas.style.top, 10) || 0;
+    gameHUD.style.top = (canvasTop + 10) + "px";
+    gameHUD.style.left = "10px";
   }
   
   if (player) {
@@ -420,7 +422,6 @@ function updateBullets() {
   }
 }
 
-// 敵の弾：生成＆更新
 function spawnEnemyBullet(enemy) {
   if (!player) return;
   const bulletSpeed = 4;
@@ -428,7 +429,6 @@ function spawnEnemyBullet(enemy) {
   const enemyCenterY = enemy.y + enemy.height;
   const playerCenterX = player.x + player.width / 2;
   const playerCenterY = player.y + player.height / 2;
-  // 垂直差が小さい場合、最低値を与えて真横発射を防止
   let vDiff = playerCenterY - enemyCenterY;
   if (vDiff < 10) vDiff = 10;
   const hDiff = playerCenterX - enemyCenterX;
@@ -662,7 +662,6 @@ function checkCollisions() {
     }
   }
   
-  // 弾と敵の衝突判定
   for (let i = bullets.length - 1; i >= 0; i--) {
     const bullet = bullets[i];
     for (let j = enemies.length - 1; j >= 0; j--) {
@@ -688,7 +687,6 @@ function checkCollisions() {
     }
   }
   
-  // プレイヤーと敵および敵の弾との衝突（無敵中は判定しない）
   if (!playerInvincible) {
     for (let i = enemies.length - 1; i >= 0; i--) {
       const enemy = enemies[i];
@@ -732,7 +730,6 @@ function checkCollisions() {
     }
   }
   
-  // プレイヤーとパワーアップの衝突判定
   for (let i = powerups.length - 1; i >= 0; i--) {
     const powerup = powerups[i];
     if (isColliding(player, powerup)) {
@@ -824,7 +821,6 @@ function showLocationCard() {
   const locationCard = document.getElementById("locationCard");
   locationCard.style.display = "flex";
   
-  // location.json を読み込み、内容を反映する
   fetch("location.json")
     .then(response => response.json())
     .then(data => {
@@ -837,7 +833,6 @@ function showLocationCard() {
       document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
     });
   
-  // locationCard 内のリスタートボタンにイベントを設定
   document.getElementById("restartBtn").addEventListener("click", () => {
     locationCard.style.display = "none";
     document.getElementById("gameHUD").style.display = "block";
