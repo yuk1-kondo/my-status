@@ -2,39 +2,52 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <!-- viewport-fit=cover を追加してセーフエリアに対応 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>宇宙船シューティングゲーム</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>こんちゃんイマドコシューティング DX</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="overlay">
-    <h1>宇宙船シューティングゲーム</h1>
-    <div id="gameExplanation">
-      <p>
-        このゲームはシンプルなシューティングゲームです。<br>
-        あなたは宇宙船を操作して、迫り来る敵や敵の弾を避けながら、敵を撃破してスコアを稼ぎます。<br>
-        矢印キー（またはタッチ操作）で左右に移動し、スペースキー（またはタッチ）で弾を発射。<br>
-        パワーアップアイテムを取得すると、連射モード、ワイドショット、シールドなどの特殊能力が発動します。<br>
-        ゲームクリア条件はスコア100点！ 高得点を目指して頑張ってください。
-      </p>
-    </div>
-    <button id="startBtn">スタート</button>
+  <!-- ゲームキャンバス -->
+  <canvas id="gameCanvas"></canvas>
+  
+  <!-- ゲームHUD -->
+  <div id="gameHUD">
+    <div>スコア: <span id="scoreDisplay">0</span></div>
+    <div>残機: <span id="livesDisplay">3</span></div>
+    <div>レベル: <span id="levelDisplay">1</span></div>
   </div>
   
-  <canvas id="gameCanvas"></canvas>
-  <div id="gameHUD">
-    <p>Score: <span id="scoreDisplay">0</span></p>
-    <p>Lives: <span id="livesDisplay">3</span></p>
-    <p>Level: <span id="levelDisplay">1</span></p>
-  </div>
-  <div id="locationCard">
-    <h2>イマココ</h2>
-    <p id="status"></p>
-    <p id="lastUpdated"></p>
-  </div>
+  <!-- パワーアップ通知 -->
   <div id="powerupNotification"></div>
-
-  <script src="script.js"></script>
+  
+  <!-- ゲームクリア後の「イマドコ」カード -->
+  <div id="locationCard">
+    <div class="card">
+      <h1>こんちゃんイマドコ</h1>
+      <p><strong>イマココ:</strong> <span id="status">読み込み中...</span></p>
+      <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
+    </div>
+  </div>
+  
+  <!-- オーバーレイ（説明文＋スタートボタン） -->
+  <div id="overlay">
+    <div class="instructions">
+      <h2>こんちゃんイマドコシューティング DX</h2>
+      <ul>
+        <li>【スマホ】キャンバス上部80％をタップで弾を発射、下部20％で左右移動。</li>
+        <li>【PC】←→キーで移動、スペース/Enterで弾を発射。</li>
+        <li><span style="color:#aaaaaa">■</span> <b>グレー</b>の敵: +10点 (高頻度で出現)</li>
+        <li><span style="color:#ffa500">●</span> <b>オレンジ</b>の敵: -5点 (グレーの2倍の頻度)</li>
+        <li><span style="color:#ff3366">■</span> <b>ジグザグ</b>の敵: ランダム移動・多色展開！倒すと-10点、衝突すると-20点 (グレーの3倍の頻度)</li>
+        <li>新機能！<span style="color:#ffff00">★</span> <b>パワーアップアイテム</b>が時々出現！</li>
+        <li>ゲームクリア条件: <b>100点到達</b></li>
+        <li>プレイヤーの残機は3つ、敵と衝突すると残機が減ります</li>
+      </ul>
+      <p>✨ 頑張ってください！ ✨</p>
+    </div>
+    <button id="startBtn">PLAY GAME</button>
+  </div>
+  
+  <script src="script.js" defer></script>
 </body>
 </html>
