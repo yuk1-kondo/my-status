@@ -2,7 +2,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #121212; /* ダークテーマ */
+  background: #121212;
   color: #ffffff;
   width: 100%;
   height: 100%;
@@ -17,7 +17,7 @@ html, body {
 
 /* キャンバススタイル */
 canvas {
-  background: linear-gradient(to bottom, #05071b, #0d1331); /* 宇宙風グラデーション */
+  background: linear-gradient(to bottom, #05071b, #0d1331);
   display: block;
   touch-action: none;
   border: 2px solid #4a5eff;
@@ -76,6 +76,22 @@ canvas {
   color: #ff5e00;
   text-shadow: 0 0 10px rgba(255, 94, 0, 0.5);
   margin-top: 0;
+}
+
+/* レスポンシブ調整（スマホ向け） */
+@media (max-width: 768px) {
+  #overlay {
+    padding: 10px;
+  }
+  .instructions {
+    font-size: 16px;
+    padding: 15px;
+    max-width: 90%;
+  }
+  #overlay button {
+    font-size: 24px;
+    padding: 10px 20px;
+  }
 }
 
 /* クリア後の「イマドコ」カード */
