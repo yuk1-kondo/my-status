@@ -20,8 +20,6 @@ canvas {
   border: 2px solid #4a5eff;
   box-sizing: border-box;
   position: absolute;
-  top: 0;
-  left: 0;
 }
 
 /* 外部HUDは不要になったため削除または無効化 */
