@@ -1,5 +1,5 @@
-// 定数とグローバル変数
-const targetScore = 100; // ゲームクリア条件を100点に変更
+// 定数・グローバル変数
+const targetScore = 100; // ゲームクリア条件
 let canvas, ctx;
 let player, bullets, enemies, powerups;
 let score, lives, level;
@@ -26,16 +26,16 @@ let sprites = {
   powerups: {},
   explosions: []
 };
+// 敵の弾用
+let enemyBullets = [];
 
-// ★ スプライト画像の改良版（loadGameAssets） ★
+/* スプライト画像の生成 */
 function loadGameAssets() {
-  // プレイヤーの宇宙船風スプライト作成
+  // プレイヤー用スプライト
   sprites.player = document.createElement('canvas');
   sprites.player.width = 30;
-  sprites.player.height = 40; // エンジン炎分含む
+  sprites.player.height = 40;
   let pCtx = sprites.player.getContext('2d');
-  
-  // 本体
   pCtx.fillStyle = "#4a5eff";
   pCtx.beginPath();
   pCtx.moveTo(15, 0);
@@ -43,8 +43,6 @@ function loadGameAssets() {
   pCtx.lineTo(30, 25);
   pCtx.closePath();
   pCtx.fill();
-  
-  // ウィング追加
   pCtx.fillStyle = "#2233cc";
   pCtx.beginPath();
   pCtx.moveTo(0, 25);
@@ -54,8 +52,6 @@ function loadGameAssets() {
   pCtx.lineTo(30, 25);
   pCtx.closePath();
   pCtx.fill();
-  
-  // コックピット
   pCtx.fillStyle = "#8ab3ff";
   pCtx.beginPath();
   pCtx.moveTo(15, 5);
@@ -63,8 +59,6 @@ function loadGameAssets() {
   pCtx.lineTo(20, 18);
   pCtx.closePath();
   pCtx.fill();
-  
-  // エンジン炎
   pCtx.fillStyle = "#ff5500";
   pCtx.beginPath();
   pCtx.moveTo(10, 25);
@@ -72,8 +66,6 @@ function loadGameAssets() {
   pCtx.lineTo(20, 25);
   pCtx.closePath();
   pCtx.fill();
-  
-  // エンジン炎内側（黄色）
   pCtx.fillStyle = "#ffcc00";
   pCtx.beginPath();
   pCtx.moveTo(12, 25);
@@ -81,8 +73,6 @@ function loadGameAssets() {
   pCtx.lineTo(18, 25);
   pCtx.closePath();
   pCtx.fill();
-  
-  // 左右ライト
   pCtx.fillStyle = "#ffffff";
   pCtx.beginPath();
   pCtx.arc(5, 20, 1, 0, Math.PI * 2);
@@ -90,7 +80,7 @@ function loadGameAssets() {
   pCtx.beginPath();
   pCtx.arc(25, 20, 1, 0, Math.PI * 2);
   pCtx.fill();
-  
+
   // グレー敵のスプライト
   sprites.enemies.gray = document.createElement('canvas');
   sprites.enemies.gray.width = 20;
@@ -105,7 +95,6 @@ function loadGameAssets() {
   grayCtx.lineTo(20, 10);
   grayCtx.closePath();
   grayCtx.fill();
-  // 翼追加
   grayCtx.fillStyle = "#888888";
   grayCtx.beginPath();
   grayCtx.moveTo(0, 10);
@@ -114,31 +103,26 @@ function loadGameAssets() {
   grayCtx.lineTo(20, 10);
   grayCtx.closePath();
   grayCtx.fill();
-  // 詳細
   grayCtx.fillStyle = "#666666";
   grayCtx.fillRect(8, 5, 4, 8);
-  // 光沢
   grayCtx.fillStyle = "#cccccc";
   grayCtx.beginPath();
   grayCtx.arc(10, 7, 2, 0, Math.PI * 2);
   grayCtx.fill();
-  
+
   // オレンジ敵のスプライト
   sprites.enemies.orange = document.createElement('canvas');
   sprites.enemies.orange.width = 20;
   sprites.enemies.orange.height = 20;
   let orangeCtx = sprites.enemies.orange.getContext('2d');
-  // UFO風形状
   orangeCtx.fillStyle = "#ffa500";
   orangeCtx.beginPath();
   orangeCtx.ellipse(10, 10, 10, 6, 0, 0, Math.PI * 2);
   orangeCtx.fill();
-  // 中央ドーム
   orangeCtx.fillStyle = "#ffcc00";
   orangeCtx.beginPath();
   orangeCtx.ellipse(10, 7, 5, 5, 0, 0, Math.PI * 2);
   orangeCtx.fill();
-  // 下部光る部分
   orangeCtx.fillStyle = "#ff5500";
   for (let i = 0; i < 5; i++) {
     const angle = i * Math.PI / 2.5;
@@ -146,14 +130,13 @@ function loadGameAssets() {
     orangeCtx.arc(10 + 8 * Math.cos(angle), 10 + 3 * Math.sin(angle), 1.5, 0, Math.PI * 2);
     orangeCtx.fill();
   }
-  // 上部アンテナ
   orangeCtx.fillStyle = "#ffffff";
   orangeCtx.fillRect(9.5, 0, 1, 4);
   orangeCtx.beginPath();
   orangeCtx.arc(10, 0, 1, 0, Math.PI * 2);
   orangeCtx.fill();
-  
-  // 弾のスプライト（発光エフェクト付き）
+
+  // 弾のスプライト
   sprites.bullets = document.createElement('canvas');
   sprites.bullets.width = 5;
   sprites.bullets.height = 10;
@@ -170,8 +153,8 @@ function loadGameAssets() {
   bulletCtx.beginPath();
   bulletCtx.arc(2.5, 3, 1, 0, Math.PI * 2);
   bulletCtx.fill();
-  
-  // パワーアップスプライト
+
+  // パワーアップ用スプライト
   powerupTypes.forEach(type => {
     sprites.powerups[type.name] = document.createElement('canvas');
     sprites.powerups[type.name].width = 20;
@@ -207,7 +190,7 @@ function loadGameAssets() {
     }
     puCtx.stroke();
   });
-  
+
   // 爆発アニメーション用スプライト
   for (let i = 0; i < 5; i++) {
     sprites.explosions[i] = document.createElement('canvas');
@@ -231,20 +214,20 @@ function loadGameAssets() {
   }
 }
 
-// DOMContentLoaded時の初期化
+/* DOMContentLoaded時の初期化 */
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("gameCanvas");
   ctx = canvas.getContext("2d");
   loadGameAssets();
   setCanvasSize();
   window.addEventListener("resize", setCanvasSize);
-  
+
   document.getElementById("startBtn").addEventListener("click", () => {
     document.getElementById("overlay").style.display = "none";
     document.getElementById("gameHUD").style.display = "block";
     initGame();
   });
-  
+
   // キーボード操作
   document.addEventListener("keydown", (e) => {
     if (!player) return;
@@ -257,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!player) return;
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
   });
-  
+
   // タッチ操作
   canvas.addEventListener("touchstart", handleTouchStart);
   canvas.addEventListener("touchmove", handleTouchMove);
@@ -279,7 +262,7 @@ function initGame() {
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
   if (gameLoopId) cancelAnimationFrame(gameLoopId);
-  
+
   setCanvasSize();
   player = {
     x: canvas.width / 2 - 15,
@@ -293,6 +276,7 @@ function initGame() {
   bullets = [];
   enemies = [];
   powerups = [];
+  enemyBullets = [];
   particles = [];
   score = 0;
   lives = 3;
@@ -304,14 +288,14 @@ function initGame() {
   invincibleTimer = 0;
   playerPowerupType = null;
   powerupTimer = 0;
-  
+
   updateHUD();
   canvas.style.display = "block";
   document.getElementById("locationCard").style.display = "none";
-  
+
   startEnemyGeneration();
   powerupInterval = setInterval(spawnPowerup, 15000);
-  
+
   gameLoop();
 }
 
@@ -323,22 +307,23 @@ function updateHUD() {
 
 function gameLoop() {
   if (gamePaused || gameOver || gameClear) return;
-  
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   updatePlayer();
   updateBullets();
   updateEnemies();
   updatePowerups();
+  updateEnemyBullets();
   updateParticles();
   checkCollisions();
   updateHUD();
-  
+
   if (score >= targetScore) {
     gameClear = true;
     showLocationCard();
     return;
   }
-  
+
   gameLoopId = requestAnimationFrame(gameLoop);
 }
 
@@ -347,6 +332,15 @@ function updatePlayer() {
   if (player.x < 0) player.x = 0;
   if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
   ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
+  
+  // シールド効果（緑のリング表示）
+  if (playerPowerupType === "shield") {
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 }
 
 function shoot() {
@@ -395,6 +389,39 @@ function updateBullets() {
       continue;
     }
     ctx.drawImage(sprites.bullets, bullet.x, bullet.y, bullet.width, bullet.height);
+  }
+}
+
+// 敵の弾：生成＆更新
+function spawnEnemyBullet(enemy) {
+  if (!player) return;
+  const bulletSpeed = 4;
+  const enemyCenterX = enemy.x + enemy.width / 2;
+  const enemyCenterY = enemy.y + enemy.height;
+  const playerCenterX = player.x + player.width / 2;
+  const playerCenterY = player.y + player.height / 2;
+  const angle = Math.atan2(playerCenterY - enemyCenterY, playerCenterX - enemyCenterX);
+  enemyBullets.push({
+    x: enemyCenterX - 2.5,
+    y: enemyCenterY,
+    width: 5,
+    height: 10,
+    dx: Math.cos(angle) * bulletSpeed,
+    dy: Math.sin(angle) * bulletSpeed
+  });
+}
+
+function updateEnemyBullets() {
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    let bullet = enemyBullets[i];
+    bullet.x += bullet.dx;
+    bullet.y += bullet.dy;
+    if (bullet.y > canvas.height || bullet.x < 0 || bullet.x > canvas.width) {
+      enemyBullets.splice(i, 1);
+      continue;
+    }
+    ctx.fillStyle = "#ff0000";
+    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
   }
 }
 
@@ -452,7 +479,8 @@ function spawnZigzagEnemy() {
     hp: 1,
     movePattern: movePattern,
     color: color,
-    direction: Math.random() < 0.5 ? -1 : 1
+    direction: Math.random() < 0.5 ? -1 : 1,
+    shootCooldown: Math.floor(Math.random() * 100 + 100)
   });
 }
 
@@ -463,18 +491,23 @@ function updateEnemies() {
     if (enemy.type === "zigzag") {
       enemy.x += enemy.direction * 2;
       if (enemy.x < 0 || enemy.x + enemy.width > canvas.width) enemy.direction *= -1;
+      enemy.shootCooldown--;
+      if (enemy.shootCooldown <= 0 && player) {
+        if (Math.random() < 0.3) {
+          spawnEnemyBullet(enemy);
+        }
+        enemy.shootCooldown = Math.floor(Math.random() * 100 + 100);
+      }
+      ctx.fillStyle = enemy.color;
+      ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+    } else if (enemy.type === "gray") {
+      ctx.drawImage(sprites.enemies.gray, enemy.x, enemy.y, enemy.width, enemy.height);
+    } else if (enemy.type === "orange") {
+      ctx.drawImage(sprites.enemies.orange, enemy.x, enemy.y, enemy.width, enemy.height);
     }
     if (enemy.y > canvas.height) {
       enemies.splice(i, 1);
       continue;
-    }
-    if (enemy.type === "gray") {
-      ctx.drawImage(sprites.enemies.gray, enemy.x, enemy.y, enemy.width, enemy.height);
-    } else if (enemy.type === "orange") {
-      ctx.drawImage(sprites.enemies.orange, enemy.x, enemy.y, enemy.width, enemy.height);
-    } else if (enemy.type === "zigzag") {
-      ctx.fillStyle = enemy.color;
-      ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
     }
   }
 }
@@ -513,7 +546,7 @@ function updatePowerups() {
 }
 
 function updateParticles() {
-  // 必要に応じてパーティクルエフェクト実装
+  // パーティクルエフェクト実装（必要に応じて）
 }
 
 function checkCollisions() {
@@ -533,6 +566,7 @@ function checkCollisions() {
       }
     }
   }
+  
   // 敵とプレイヤーの衝突判定
   for (let i = enemies.length - 1; i >= 0; i--) {
     let enemy = enemies[i];
@@ -541,14 +575,35 @@ function checkCollisions() {
         player.y < enemy.y + enemy.height &&
         player.y + player.height > enemy.y) {
       enemies.splice(i, 1);
-      lives--;
-      if (lives <= 0) {
-        gameOver = true;
-        alert("Game Over");
+      if (playerPowerupType !== "shield") {
+        lives--;
+        if (lives <= 0) {
+          gameOver = true;
+          alert("Game Over");
+        }
       }
     }
   }
-  // パワーアップアイテムの取得判定
+  
+  // 敵弾とプレイヤーの衝突判定
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    let bullet = enemyBullets[i];
+    if (bullet.x < player.x + player.width &&
+        bullet.x + bullet.width > player.x &&
+        bullet.y < player.y + player.height &&
+        bullet.y + bullet.height > player.y) {
+      enemyBullets.splice(i, 1);
+      if (playerPowerupType !== "shield") {
+        lives--;
+        if (lives <= 0) {
+          gameOver = true;
+          alert("Game Over");
+        }
+      }
+    }
+  }
+  
+  // パワーアップアイテム取得判定
   for (let i = powerups.length - 1; i >= 0; i--) {
     let powerup = powerups[i];
     if (player.x < powerup.x + powerup.width &&
@@ -556,7 +611,7 @@ function checkCollisions() {
         player.y < powerup.y + powerup.height &&
         player.y + player.height > powerup.y) {
       playerPowerupType = powerup.type;
-      powerupTimer = 500; // 効果持続例
+      powerupTimer = 500;
       powerups.splice(i, 1);
       showPowerupNotification(powerup.text);
     }
@@ -598,6 +653,7 @@ function togglePause() {
   }
 }
 
+// タッチ操作
 function handleTouchStart(e) {
   if (gamePaused) {
     togglePause();
@@ -644,7 +700,7 @@ function handleTouchEnd(e) {
   e.preventDefault();
 }
 
-/* ゲームクリア時に location.json を読み込み、カードに反映 */
+// ゲームクリア時のイマココ表示（location.jsonを取得）
 function showLocationCard() {
   fetch('location.json')
     .then(response => response.json())
