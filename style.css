@@ -20,10 +20,27 @@ canvas {
   height: 100%;
   background: rgba(0,0,0,0.8);
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
   z-index: 10;
+  /* セーフエリア用パディング */
+  padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
+}
+
+#overlay h1 {
+  margin: 0;
+  font-size: 28px;
+  text-align: center;
+}
+
+/* ゲーム説明 */
+#gameExplanation {
+  margin: 20px 0;
+  text-align: center;
+  line-height: 1.5;
+  font-size: 16px;
+  max-width: 90%;
 }
 
 #startBtn {
