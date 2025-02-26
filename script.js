@@ -1,40 +1,24 @@
-// スコア200点でクリア
+// 定数とグローバル変数
 const targetScore = 200;
-
-// グローバル変数
 let canvas, ctx;
 let player, bullets, enemies, powerups;
 let score, lives, level;
 let gameOver, gameClear, gamePaused;
-let enemyInterval = null;  // 敵生成用 interval
-let powerupInterval = null; // パワーアップ生成用 interval
-let gameLoopId = null;     // ゲームループ用 ID
-let particles = [];        // パーティクルエフェクト用配列
-let playerInvincible = false; // 無敵状態フラグ
-let invincibleTimer = 0;   // 無敵時間
-let playerPowerupType = null; // 現在のパワーアップタイプ
-let powerupTimer = 0;      // パワーアップ効果持続時間
-
-// スマホ用タッチ操作（下部20％で移動）
+let enemyInterval = null;
+let powerupInterval = null;
+let gameLoopId = null;
+let particles = [];
+let playerInvincible = false;
+let invincibleTimer = 0;
+let playerPowerupType = null;
+let powerupTimer = 0;
 let movementTouchId = null;
-
-// ジグザグ敵のカラーバリエーション
-const zigzagColors = [
-  "#ff3366", // ピンク
-  "#33ccff", // 水色
-  "#ff9900", // オレンジ
-  "#66ff33", // ライムグリーン
-  "#9933ff"  // 紫
-];
-
-// パワーアップタイプ
+const zigzagColors = ["#ff3366", "#33ccff", "#ff9900", "#66ff33", "#9933ff"];
 const powerupTypes = [
   { name: "rapidFire", color: "#ffff00", text: "連射モード！" },
   { name: "wideShot", color: "#00ffff", text: "ワイドショット！" },
   { name: "shield", color: "#00ff00", text: "シールド！" }
 ];
-
-// スプライト画像用
 let sprites = {
   player: null,
   enemies: {},
@@ -43,39 +27,68 @@ let sprites = {
   explosions: []
 };
 
-// ゲーム内アセット読み込み
+// ★ スプライト画像の改良版（loadGameAssets） ★
 function loadGameAssets() {
   // プレイヤーの宇宙船風スプライト作成
   sprites.player = document.createElement('canvas');
   sprites.player.width = 30;
-  sprites.player.height = 30;
+  sprites.player.height = 40; // エンジン炎分含む
   let pCtx = sprites.player.getContext('2d');
   
-  // プレイヤーシップを描画（三角形からよりゲーム風に）
+  // 本体
   pCtx.fillStyle = "#4a5eff";
   pCtx.beginPath();
-  pCtx.moveTo(15, 0);  // 先端
-  pCtx.lineTo(0, 30);  // 左下
-  pCtx.lineTo(30, 30); // 右下
+  pCtx.moveTo(15, 0);
+  pCtx.lineTo(0, 25);
+  pCtx.lineTo(30, 25);
   pCtx.closePath();
   pCtx.fill();
   
-  // 光沢効果を追加
+  // ウィング追加
+  pCtx.fillStyle = "#2233cc";
+  pCtx.beginPath();
+  pCtx.moveTo(0, 25);
+  pCtx.lineTo(5, 15);
+  pCtx.lineTo(15, 20);
+  pCtx.lineTo(25, 15);
+  pCtx.lineTo(30, 25);
+  pCtx.closePath();
+  pCtx.fill();
+  
+  // コックピット
   pCtx.fillStyle = "#8ab3ff";
   pCtx.beginPath();
-  pCtx.moveTo(15, 5);  // 先端より少し下
-  pCtx.lineTo(10, 25); // 左下寄り
-  pCtx.lineTo(20, 25); // 右下寄り
+  pCtx.moveTo(15, 5);
+  pCtx.lineTo(10, 18);
+  pCtx.lineTo(20, 18);
   pCtx.closePath();
   pCtx.fill();
   
-  // エンジン炎を追加
+  // エンジン炎
   pCtx.fillStyle = "#ff5500";
   pCtx.beginPath();
-  pCtx.moveTo(10, 30);
-  pCtx.lineTo(15, 40);
-  pCtx.lineTo(20, 30);
+  pCtx.moveTo(10, 25);
+  pCtx.lineTo(15, 35);
+  pCtx.lineTo(20, 25);
   pCtx.closePath();
+  pCtx.fill();
+  
+  // エンジン炎内側（黄色）
+  pCtx.fillStyle = "#ffcc00";
+  pCtx.beginPath();
+  pCtx.moveTo(12, 25);
+  pCtx.lineTo(15, 32);
+  pCtx.lineTo(18, 25);
+  pCtx.closePath();
+  pCtx.fill();
+  
+  // 左右ライト
+  pCtx.fillStyle = "#ffffff";
+  pCtx.beginPath();
+  pCtx.arc(5, 20, 1, 0, Math.PI * 2);
+  pCtx.fill();
+  pCtx.beginPath();
+  pCtx.arc(25, 20, 1, 0, Math.PI * 2);
   pCtx.fill();
   
   // グレー敵のスプライト
@@ -83,61 +96,79 @@ function loadGameAssets() {
   sprites.enemies.gray.width = 20;
   sprites.enemies.gray.height = 20;
   let grayCtx = sprites.enemies.gray.getContext('2d');
-  
-  // より宇宙船っぽい形に
   grayCtx.fillStyle = "#aaaaaa";
   grayCtx.beginPath();
-  grayCtx.moveTo(10, 0);   // 先端
-  grayCtx.lineTo(0, 15);   // 左
-  grayCtx.lineTo(10, 20);  // 底中央
-  grayCtx.lineTo(20, 15);  // 右
+  grayCtx.moveTo(10, 0);
+  grayCtx.lineTo(0, 10);
+  grayCtx.lineTo(5, 15);
+  grayCtx.lineTo(15, 15);
+  grayCtx.lineTo(20, 10);
   grayCtx.closePath();
   grayCtx.fill();
-  
-  // 詳細を追加
+  // 翼追加
+  grayCtx.fillStyle = "#888888";
+  grayCtx.beginPath();
+  grayCtx.moveTo(0, 10);
+  grayCtx.lineTo(3, 18);
+  grayCtx.lineTo(17, 18);
+  grayCtx.lineTo(20, 10);
+  grayCtx.closePath();
+  grayCtx.fill();
+  // 詳細
   grayCtx.fillStyle = "#666666";
-  grayCtx.fillRect(8, 5, 4, 10);
+  grayCtx.fillRect(8, 5, 4, 8);
+  // 光沢
+  grayCtx.fillStyle = "#cccccc";
+  grayCtx.beginPath();
+  grayCtx.arc(10, 7, 2, 0, Math.PI * 2);
+  grayCtx.fill();
   
   // オレンジ敵のスプライト
   sprites.enemies.orange = document.createElement('canvas');
   sprites.enemies.orange.width = 20;
   sprites.enemies.orange.height = 20;
   let orangeCtx = sprites.enemies.orange.getContext('2d');
-  
-  // UFO風の形状に
+  // UFO風形状
   orangeCtx.fillStyle = "#ffa500";
   orangeCtx.beginPath();
   orangeCtx.ellipse(10, 10, 10, 6, 0, 0, Math.PI * 2);
   orangeCtx.fill();
-  
-  // ドームを追加
+  // 中央ドーム
   orangeCtx.fillStyle = "#ffcc00";
   orangeCtx.beginPath();
-  orangeCtx.ellipse(10, 8, 5, 5, 0, 0, Math.PI * 2);
+  orangeCtx.ellipse(10, 7, 5, 5, 0, 0, Math.PI * 2);
   orangeCtx.fill();
-  
-  // ライト追加
+  // 下部光る部分
+  orangeCtx.fillStyle = "#ff5500";
+  for (let i = 0; i < 5; i++) {
+    const angle = i * Math.PI / 2.5;
+    orangeCtx.beginPath();
+    orangeCtx.arc(10 + 8 * Math.cos(angle), 10 + 3 * Math.sin(angle), 1.5, 0, Math.PI * 2);
+    orangeCtx.fill();
+  }
+  // 上部アンテナ
   orangeCtx.fillStyle = "#ffffff";
+  orangeCtx.fillRect(9.5, 0, 1, 4);
   orangeCtx.beginPath();
-  orangeCtx.arc(6, 12, 1, 0, Math.PI * 2);
-  orangeCtx.fill();
-  orangeCtx.beginPath();
-  orangeCtx.arc(14, 12, 1, 0, Math.PI * 2);
+  orangeCtx.arc(10, 0, 1, 0, Math.PI * 2);
   orangeCtx.fill();
   
-  // 弾のスプライト
+  // 弾のスプライト（発光エフェクト付き）
   sprites.bullets = document.createElement('canvas');
   sprites.bullets.width = 5;
   sprites.bullets.height = 10;
   let bulletCtx = sprites.bullets.getContext('2d');
-  
-  // エネルギー弾風
   const bulletGradient = bulletCtx.createLinearGradient(0, 0, 0, 10);
   bulletGradient.addColorStop(0, "#ffffff");
-  bulletGradient.addColorStop(1, "#4a5eff");
+  bulletGradient.addColorStop(0.5, "#ffff00");
+  bulletGradient.addColorStop(1, "#ff9900");
   bulletCtx.fillStyle = bulletGradient;
   bulletCtx.beginPath();
   bulletCtx.ellipse(2.5, 5, 2.5, 5, 0, 0, Math.PI * 2);
+  bulletCtx.fill();
+  bulletCtx.fillStyle = "rgba(255, 255, 255, 0.6)";
+  bulletCtx.beginPath();
+  bulletCtx.arc(2.5, 3, 1, 0, Math.PI * 2);
   bulletCtx.fill();
   
   // パワーアップスプライト
@@ -146,8 +177,6 @@ function loadGameAssets() {
     sprites.powerups[type.name].width = 20;
     sprites.powerups[type.name].height = 20;
     let puCtx = sprites.powerups[type.name].getContext('2d');
-    
-    // 輝く星型
     puCtx.fillStyle = type.color;
     puCtx.beginPath();
     for (let i = 0; i < 5; i++) {
@@ -155,20 +184,28 @@ function loadGameAssets() {
       const outerX = 10 + 10 * Math.cos(angle);
       const outerY = 10 + 10 * Math.sin(angle);
       puCtx.lineTo(outerX, outerY);
-      
       const innerAngle = angle + Math.PI / 5;
-      const innerX = 10 + 5 * Math.cos(innerAngle);
-      const innerY = 10 + 5 * Math.sin(innerAngle);
+      const innerX = 10 + 4 * Math.cos(innerAngle);
+      const innerY = 10 + 4 * Math.sin(innerAngle);
       puCtx.lineTo(innerX, innerY);
     }
     puCtx.closePath();
     puCtx.fill();
-    
-    // 中央に光沢を追加
     puCtx.fillStyle = "#ffffff";
     puCtx.beginPath();
     puCtx.arc(10, 10, 3, 0, Math.PI * 2);
     puCtx.fill();
+    puCtx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    puCtx.lineWidth = 1;
+    puCtx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+      const outerX = 10 + 12 * Math.cos(angle);
+      const outerY = 10 + 12 * Math.sin(angle);
+      puCtx.moveTo(10, 10);
+      puCtx.lineTo(outerX, outerY);
+    }
+    puCtx.stroke();
   });
   
   // 爆発アニメーション用スプライト
@@ -177,115 +214,73 @@ function loadGameAssets() {
     sprites.explosions[i].width = 30;
     sprites.explosions[i].height = 30;
     let exCtx = sprites.explosions[i].getContext('2d');
-    
     const size = 5 + i * 5;
     exCtx.fillStyle = `rgba(255, ${150 - i * 30}, 0, ${1 - i * 0.2})`;
     exCtx.beginPath();
     exCtx.arc(15, 15, size, 0, Math.PI * 2);
     exCtx.fill();
-    
-    // 爆発の破片
-    for (let j = 0; j < i * 2; j++) {
+    for (let j = 0; j < i * 3; j++) {
       const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * size;
+      const distance = Math.random() * size * 1.2;
       const fragSize = 1 + Math.random() * 3;
-      exCtx.fillStyle = "#ffcc00";
+      exCtx.fillStyle = j % 2 === 0 ? "#ffcc00" : "#ffffff";
       exCtx.beginPath();
-      exCtx.arc(
-        15 + Math.cos(angle) * distance,
-        15 + Math.sin(angle) * distance,
-        fragSize, 0, Math.PI * 2
-      );
+      exCtx.arc(15 + Math.cos(angle) * distance, 15 + Math.sin(angle) * distance, fragSize, 0, Math.PI * 2);
       exCtx.fill();
     }
   }
 }
 
+// DOMContentLoaded時の初期化
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM loaded.");
-
   canvas = document.getElementById("gameCanvas");
   ctx = canvas.getContext("2d");
-
-  // ゲームアセットを読み込み
   loadGameAssets();
-
-  // PC / スマホ判定に応じてキャンバスサイズを設定
   setCanvasSize();
   window.addEventListener("resize", setCanvasSize);
-
-  // スタートボタン
+  
   document.getElementById("startBtn").addEventListener("click", () => {
     document.getElementById("overlay").style.display = "none";
     document.getElementById("gameHUD").style.display = "block";
     initGame();
   });
-
-  // PC向けキーボード操作
+  
+  // キーボード操作
   document.addEventListener("keydown", (e) => {
     if (!player) return;
     if (e.key === "ArrowLeft") player.dx = -player.speed;
     if (e.key === "ArrowRight") player.dx = player.speed;
     if (e.key === " " || e.key === "Enter") shoot();
-    if (e.key === "p" || e.key === "P") togglePause();
+    if (e.key.toLowerCase() === "p") togglePause();
   });
   document.addEventListener("keyup", (e) => {
     if (!player) return;
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
   });
-
-  // スマホ向けタッチ操作
+  
+  // タッチ操作
   canvas.addEventListener("touchstart", handleTouchStart);
   canvas.addEventListener("touchmove", handleTouchMove);
   canvas.addEventListener("touchend", handleTouchEnd);
 });
 
-/** 一時停止切り替え */
-function togglePause() {
-  if (gameOver || gameClear) return;
-  
-  gamePaused = !gamePaused;
-  if (gamePaused) {
-    // 一時停止状態になったらゲームループを停止
-    cancelAnimationFrame(gameLoopId);
-    
-    // 一時停止表示
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "30px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("PAUSE", canvas.width / 2, canvas.height / 2);
-    ctx.font = "16px Arial";
-    ctx.fillText("Press P to resume", canvas.width / 2, canvas.height / 2 + 40);
-  } else {
-    // 再開状態ならループを再開
-    gameLoop();
-  }
-}
-
-/** PC/スマホ判定してキャンバスサイズを設定 */
 function setCanvasSize() {
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   if (isMobile) {
-    // スマホ：全画面
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   } else {
-    // PC：最大640×480に制限
     canvas.width = Math.min(window.innerWidth, 640);
     canvas.height = Math.min(window.innerHeight, 480);
   }
 }
 
-/** ゲーム初期化 */
 function initGame() {
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
   if (gameLoopId) cancelAnimationFrame(gameLoopId);
-
+  
   setCanvasSize();
-
   player = {
     x: canvas.width / 2 - 15,
     y: canvas.height - 40,
@@ -293,7 +288,7 @@ function initGame() {
     height: 30,
     speed: 5,
     dx: 0,
-    frameCount: 0 // アニメーション用
+    frameCount: 0
   };
   bullets = [];
   enemies = [];
@@ -309,99 +304,183 @@ function initGame() {
   invincibleTimer = 0;
   playerPowerupType = null;
   powerupTimer = 0;
-
-  // HUD更新
+  
   updateHUD();
-
   canvas.style.display = "block";
   document.getElementById("locationCard").style.display = "none";
-
-  // 敵を生成するインターバル設定（レベルに応じて速度調整）
-  startEnemyGeneration();
   
-  // パワーアップアイテムを15秒ごとに生成
+  startEnemyGeneration();
   powerupInterval = setInterval(spawnPowerup, 15000);
-
-  // メインループ開始
+  
   gameLoop();
 }
 
-/** 敵の生成開始 */
-function startEnemyGeneration() {
-  if (enemyInterval) clearInterval(enemyInterval);
-  
-  // レベルに応じて敵の生成間隔を調整（レベルが上がるほど早く）
-  const baseInterval = 1500;
-  const intervalReduction = 100 * (level - 1);
-  const interval = Math.max(baseInterval - intervalReduction, 800);
-  
-  enemyInterval = setInterval(spawnEnemy, interval);
+function updateHUD() {
+  document.getElementById("scoreDisplay").textContent = score;
+  document.getElementById("livesDisplay").textContent = lives;
+  document.getElementById("levelDisplay").textContent = level;
 }
 
-/** タッチ開始 */
-function handleTouchStart(e) {
-  if (gamePaused) {
-    togglePause();
-    e.preventDefault();
+function gameLoop() {
+  if (gamePaused || gameOver || gameClear) return;
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updatePlayer();
+  updateBullets();
+  updateEnemies();
+  updatePowerups();
+  updateParticles();
+  checkCollisions();
+  updateHUD();
+  
+  if (score >= targetScore) {
+    gameClear = true;
+    showLocationCard();
     return;
   }
-
-  const rect = canvas.getBoundingClientRect();
-  for (let i = 0; i < e.changedTouches.length; i++) {
-    const touch = e.changedTouches[i];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    // 下部20%で移動
-    if (y >= canvas.height * 0.8) {
-      if (movementTouchId === null) {
-        movementTouchId = touch.identifier;
-        if (x < canvas.width / 2) {
-          player.dx = -player.speed;
-        } else {
-          player.dx = player.speed;
-        }
-      }
-    } else {
-      // 上部80%は発射
-      shoot();
-    }
-  }
-  e.preventDefault();
+  
+  gameLoopId = requestAnimationFrame(gameLoop);
 }
 
-/** タッチ移動 */
-function handleTouchMove(e) {
-  const rect = canvas.getBoundingClientRect();
-  for (let i = 0; i < e.changedTouches.length; i++) {
-    const touch = e.changedTouches[i];
-    if (touch.identifier === movementTouchId) {
-      const x = touch.clientX - rect.left;
-      if (x < canvas.width / 2) {
-        player.dx = -player.speed;
-      } else {
-        player.dx = player.speed;
-      }
-    }
-  }
-  e.preventDefault();
+function updatePlayer() {
+  player.x += player.dx;
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+  ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
 }
 
-/** タッチ終了 */
-function handleTouchEnd(e) {
-  for (let i = 0; i < e.changedTouches.length; i++) {
-    const touch = e.changedTouches[i];
-    if (touch.identifier === movementTouchId) {
-      player.dx = 0;
-      movementTouchId = null;
+function shoot() {
+  if (!player || gameOver || gameClear || gamePaused) return;
+  const maxBullets = playerPowerupType === "rapidFire" ? 100 : 5;
+  if (bullets.length < maxBullets) {
+    bullets.push({
+      x: player.x + player.width / 2 - 2.5,
+      y: player.y,
+      width: 5,
+      height: 10,
+      speed: 7,
+      power: 1,
+      dx: 0
+    });
+    if (playerPowerupType === "wideShot") {
+      bullets.push({
+        x: player.x + 5,
+        y: player.y,
+        width: 5,
+        height: 10,
+        speed: 6,
+        dx: -0.5,
+        power: 1
+      });
+      bullets.push({
+        x: player.x + player.width - 10,
+        y: player.y,
+        width: 5,
+        height: 10,
+        speed: 6,
+        dx: 0.5,
+        power: 1
+      });
     }
   }
-  e.preventDefault();
 }
 
-/** パワーアップアイテム生成 */
+function updateBullets() {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    let bullet = bullets[i];
+    bullet.x += bullet.dx || 0;
+    bullet.y -= bullet.speed;
+    if (bullet.y < 0) {
+      bullets.splice(i, 1);
+      continue;
+    }
+    ctx.drawImage(sprites.bullets, bullet.x, bullet.y, bullet.width, bullet.height);
+  }
+}
+
+function spawnEnemy() {
+  if (gameOver || gameClear || gamePaused) return;
+  const levelMultiplier = 1 + (level - 1) * 0.1;
+  const grayProb = 0.2 * levelMultiplier;
+  const orangeProb = grayProb * 2;
+  const zigzagProb = grayProb * 3;
+  const totalProb = grayProb + orangeProb + zigzagProb;
+  const r = Math.random() * totalProb;
+  if (r < grayProb) {
+    spawnGrayEnemy();
+  } else if (r < grayProb + orangeProb) {
+    spawnOrangeEnemy();
+  } else {
+    spawnZigzagEnemy();
+  }
+}
+
+function spawnGrayEnemy() {
+  enemies.push({
+    type: "gray",
+    x: Math.random() * (canvas.width - 20),
+    y: 0,
+    width: 20,
+    height: 20,
+    speed: 1.5 + (level - 1) * 0.2,
+    hp: 1
+  });
+}
+
+function spawnOrangeEnemy() {
+  enemies.push({
+    type: "orange",
+    x: Math.random() * (canvas.width - 20),
+    y: 0,
+    width: 20,
+    height: 20,
+    speed: 2 + (level - 1) * 0.3,
+    hp: 1
+  });
+}
+
+function spawnZigzagEnemy() {
+  const movePattern = Math.floor(Math.random() * 3);
+  const color = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
+  enemies.push({
+    type: "zigzag",
+    x: Math.random() * (canvas.width - 20),
+    y: 0,
+    width: 20,
+    height: 20,
+    speed: 2 + (level - 1) * 0.3,
+    hp: 1,
+    movePattern: movePattern,
+    color: color,
+    direction: Math.random() < 0.5 ? -1 : 1
+  });
+}
+
+function updateEnemies() {
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let enemy = enemies[i];
+    enemy.y += enemy.speed;
+    if (enemy.type === "zigzag") {
+      enemy.x += enemy.direction * 2;
+      if (enemy.x < 0 || enemy.x + enemy.width > canvas.width) enemy.direction *= -1;
+    }
+    if (enemy.y > canvas.height) {
+      enemies.splice(i, 1);
+      continue;
+    }
+    if (enemy.type === "gray") {
+      ctx.drawImage(sprites.enemies.gray, enemy.x, enemy.y, enemy.width, enemy.height);
+    } else if (enemy.type === "orange") {
+      ctx.drawImage(sprites.enemies.orange, enemy.x, enemy.y, enemy.width, enemy.height);
+    } else if (enemy.type === "zigzag") {
+      ctx.fillStyle = enemy.color;
+      ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+    }
+  }
+}
+
 function spawnPowerup() {
   if (gameOver || gameClear || gamePaused) return;
-  
   const type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
   powerups.push({
     x: Math.random() * (canvas.width - 20),
@@ -416,118 +495,155 @@ function spawnPowerup() {
   });
 }
 
-/** 弾発射（パワーアップ状態に応じて変化） */
-function shoot() {
-  if (!player || gameOver || gameClear || gamePaused) return;
-  
-  // 通常弾の最大数（連射モードなら制限なし）
-  const maxBullets = playerPowerupType === "rapidFire" ? 100 : 5;
-  
-  if (bullets.length < maxBullets) {
-    // 基本弾
-    bullets.push({
-      x: player.x + player.width / 2 - 2.5,
-      y: player.y,
-      width: 5,
-      height: 10,
-      speed: 7,
-      power: 1
-    });
-    
-    // ワイドショットモードなら左右にも発射
-    if (playerPowerupType === "wideShot") {
-      bullets.push({
-        x: player.x + 5,
-        y: player.y,
-        width: 5,
-        height: 10,
-        speed: 6,
-        dx: -0.5,
-        power: 1
-      });
-      
-      bullets.push({
-        x: player.x + player.width - 10,
-        y: player.y,
-        width: 5,
-        height: 10,
-        speed: 6,
-        dx: 0.5,
-        power: 1
-      });
+function updatePowerups() {
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    let powerup = powerups[i];
+    powerup.y += powerup.speed;
+    if (powerup.y > canvas.height) {
+      powerups.splice(i, 1);
+      continue;
     }
-    
-    // 発射音 (現実的には実装時に音声ファイルが必要)
-    // playSound('shoot');
+    ctx.save();
+    ctx.translate(powerup.x + powerup.width / 2, powerup.y + powerup.height / 2);
+    ctx.rotate(powerup.rotation);
+    ctx.drawImage(sprites.powerups[powerup.type], -powerup.width / 2, -powerup.height / 2, powerup.width, powerup.height);
+    ctx.restore();
+    powerup.rotation += 0.05;
   }
 }
 
-/** 敵生成 */
-function spawnEnemy() {
-  if (gameOver || gameClear || gamePaused) return;
+function updateParticles() {
+  // 必要に応じてパーティクルエフェクト実装
+}
 
-  // レベルに応じて敵の出現確率を調整
-  const levelMultiplier = 1 + (level - 1) * 0.1;
-  
-  // グレー敵の出現確率
-  const grayProb = 0.2 * levelMultiplier;
-  
-  // オレンジ敵の出現確率（グレーの2倍）
-  const orangeProb = grayProb * 2;
-  
-  // ジグザグ敵の出現確率（グレーの3倍）
-  const zigzagProb = grayProb * 3;
-  
-  // 確率の合計
-  const totalProb = grayProb + orangeProb + zigzagProb;
-  
-  // 0～1のランダムな数値
-  const r = Math.random() * totalProb;
-  
-  if (r < grayProb) {
-    // グレー敵
-    spawnGrayEnemy();
-  } else if (r < grayProb + orangeProb) {
-    // オレンジ敵
-    spawnOrangeEnemy();
+function checkCollisions() {
+  // 弾と敵の衝突判定
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    let bullet = bullets[i];
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      let enemy = enemies[j];
+      if (bullet.x < enemy.x + enemy.width &&
+          bullet.x + bullet.width > enemy.x &&
+          bullet.y < enemy.y + enemy.height &&
+          bullet.y + bullet.height > enemy.y) {
+        enemies.splice(j, 1);
+        bullets.splice(i, 1);
+        score += enemy.type === "gray" ? 10 : enemy.type === "orange" ? -5 : -10;
+        break;
+      }
+    }
+  }
+  // 敵とプレイヤーの衝突判定
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let enemy = enemies[i];
+    if (player.x < enemy.x + enemy.width &&
+        player.x + player.width > enemy.x &&
+        player.y < enemy.y + enemy.height &&
+        player.y + player.height > enemy.y) {
+      enemies.splice(i, 1);
+      lives--;
+      if (lives <= 0) {
+        gameOver = true;
+        alert("Game Over");
+      }
+    }
+  }
+  // パワーアップアイテムの取得判定
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    let powerup = powerups[i];
+    if (player.x < powerup.x + powerup.width &&
+        player.x + player.width > powerup.x &&
+        player.y < powerup.y + powerup.height &&
+        player.y + player.height > powerup.y) {
+      playerPowerupType = powerup.type;
+      powerupTimer = 500; // 効果持続例
+      powerups.splice(i, 1);
+      showPowerupNotification(powerup.text);
+    }
+  }
+}
+
+function showPowerupNotification(text) {
+  const notification = document.getElementById("powerupNotification");
+  notification.textContent = text;
+  notification.style.display = "block";
+  setTimeout(() => {
+    notification.style.display = "none";
+  }, 2000);
+}
+
+function startEnemyGeneration() {
+  if (enemyInterval) clearInterval(enemyInterval);
+  const baseInterval = 1500;
+  const intervalReduction = 100 * (level - 1);
+  const interval = Math.max(baseInterval - intervalReduction, 800);
+  enemyInterval = setInterval(spawnEnemy, interval);
+}
+
+function togglePause() {
+  if (gameOver || gameClear) return;
+  gamePaused = !gamePaused;
+  if (gamePaused) {
+    cancelAnimationFrame(gameLoopId);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "30px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("PAUSE", canvas.width / 2, canvas.height / 2);
+    ctx.font = "16px Arial";
+    ctx.fillText("Press P to resume", canvas.width / 2, canvas.height / 2 + 40);
   } else {
-    // ジグザグ敵
-    spawnZigzagEnemy();
+    gameLoop();
   }
 }
 
-/** グレー敵の生成 */
-function spawnGrayEnemy() {
-  enemies.push({
-    type: "gray",
-    x: Math.random() * (canvas.width - 20),
-    y: 0,
-    width: 20,
-    height: 20,
-    speed: 1.5 + (level - 1) * 0.2,
-    hp: 1  // 1発で倒せるように変更
-  });
+function handleTouchStart(e) {
+  if (gamePaused) {
+    togglePause();
+    e.preventDefault();
+    return;
+  }
+  const rect = canvas.getBoundingClientRect();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    if (y >= canvas.height * 0.8) {
+      if (movementTouchId === null) {
+        movementTouchId = touch.identifier;
+        player.dx = x < canvas.width / 2 ? -player.speed : player.speed;
+      }
+    } else {
+      shoot();
+    }
+  }
+  e.preventDefault();
 }
 
-/** オレンジ敵の生成 */
-function spawnOrangeEnemy() {
-  enemies.push({
-    type: "orange",
-    x: Math.random() * (canvas.width - 20),
-    y: 0,
-    width: 20,
-    height: 20,
-    speed: 2 + (level - 1) * 0.3,
-    hp: 1
-  });
+function handleTouchMove(e) {
+  const rect = canvas.getBoundingClientRect();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    if (touch.identifier === movementTouchId) {
+      const x = touch.clientX - rect.left;
+      player.dx = x < canvas.width / 2 ? -player.speed : player.speed;
+    }
+  }
+  e.preventDefault();
 }
 
-/** ジグザグ敵の生成 */
-function spawnZigzagEnemy() {
-  // ランダムな動きパターンを設定
-  const movePattern = Math.floor(Math.random() * 3);
-  const color = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
-  
-  enemies.push({
-    type: "zigzag",
-    x: Math.random() * (canvas.width -
+function handleTouchEnd(e) {
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    if (touch.identifier === movementTouchId) {
+      player.dx = 0;
+      movementTouchId = null;
+    }
+  }
+  e.preventDefault();
+}
+
+function showLocationCard() {
+  document.getElementById("locationCard").style.display = "block";
+}
