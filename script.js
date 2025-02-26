@@ -1,5 +1,5 @@
 // 定数とグローバル変数
-const targetScore = 200;
+const targetScore = 100;
 let canvas, ctx;
 let player, bullets, enemies, powerups;
 let score, lives, level;
