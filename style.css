@@ -24,7 +24,8 @@ canvas {
   left: 0;
 }
 
-/* ゲームHUD - 修正版 */
+/* 外部HUDは不要になったため削除または無効化 */
+/*
 #gameHUD {
   position: absolute;
   top: 10px;
@@ -38,6 +39,7 @@ canvas {
   border: 1px solid #4a5eff;
   box-shadow: 0 0 10px rgba(74, 94, 255, 0.5);
 }
+*/
 
 /* パワーアップ通知 */
 #powerupNotification {
@@ -92,7 +94,7 @@ canvas {
 }
 
 /* ボタン */
-#startBtn, #restartBtn {
+#startBtn, #restartBtn, #gameOverRestartBtn {
   background: linear-gradient(to bottom, #4a5eff, #2233cc);
   color: white;
   border: none;
@@ -106,12 +108,12 @@ canvas {
   transition: all 0.2s;
 }
 
-#startBtn:hover, #restartBtn:hover {
+#startBtn:hover, #restartBtn:hover, #gameOverRestartBtn:hover {
   transform: scale(1.05);
   box-shadow: 0 0 20px rgba(74, 94, 255, 0.8);
 }
 
-#startBtn:active, #restartBtn:active {
+#startBtn:active, #restartBtn:active, #gameOverRestartBtn:active {
   transform: scale(0.98);
 }
 
@@ -165,13 +167,6 @@ canvas {
     margin-top: 10px;
   }
   
-  #gameHUD {
-    font-size: 14px;
-    padding: 3px 6px;
-    top: 10px;
-    left: 10px;
-  }
-
   #powerupNotification {
     font-size: 18px;
     padding: 8px 16px;
@@ -193,7 +188,7 @@ canvas {
     max-height: 50vh;
   }
   
-  #startBtn, #restartBtn {
+  #startBtn, #restartBtn, #gameOverRestartBtn {
     font-size: 18px;
     padding: 10px 20px;
   }
