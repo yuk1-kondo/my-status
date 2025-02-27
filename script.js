@@ -213,7 +213,7 @@ function loadGameAssets() {
   }
 }
 
-// DOMContentLoadedイベントハンドラの修正
+// DOMContentLoadedイベントハンドラ
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("gameCanvas");
   ctx = canvas.getContext("2d");
@@ -223,8 +223,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("startBtn").addEventListener("click", () => {
     document.getElementById("overlay").style.display = "none";
-    // 外部HUDを使わないので、この行を削除
-    // document.getElementById("gameHUD").style.display = "block";
     initGame();
   });
   
@@ -232,8 +230,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (restartBtn) {
     restartBtn.addEventListener("click", () => {
       document.getElementById("locationCard").style.display = "none";
-      // 外部HUDを使わないので、この行を削除
-      // document.getElementById("gameHUD").style.display = "block";
       initGame();
     });
   }
@@ -250,6 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
   });
 
+  // タッチ操作
   canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
   canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
   canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
@@ -283,9 +280,9 @@ function setCanvasSize() {
     canvas.style.top = "0";
   }
   
-  // キャンバスを水平中央に配置するために transform を追加
-canvas.style.left = "50%";
-canvas.style.transform = "translateX(-50%)";
+  // キャンバスを水平中央に配置
+  canvas.style.left = "50%";
+  canvas.style.transform = "translateX(-50%)";
   
   if (player) {
     player.x = Math.min(player.x, canvas.width - player.width);
@@ -323,9 +320,6 @@ function initGame() {
   invincibleTimer = 0;
   playerPowerupType = null;
   powerupTimer = 0;
-
-  // 外部HUDは使わないのでコメントアウトまたは削除
-  // updateHUD();
   
   canvas.style.display = "block";
   document.getElementById("locationCard").style.display = "none";
@@ -364,8 +358,7 @@ function gameLoop() {
   updateEnemyBullets();
   updateParticles();
   checkCollisions();
-  // updateHUD(); // 既存の関数呼び出しを削除または無効化
-  drawHUD();     // 新しい描画関数を呼び出し
+  drawHUD();
   
   if (score >= targetScore) {
     gameClear = true;
@@ -382,6 +375,7 @@ function updatePlayer() {
   if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
   ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
   
+  // シールド中の描画（緑色の円）
   if (playerPowerupType === "shield") {
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = 3;
@@ -452,7 +446,7 @@ function spawnEnemyBullet(enemy) {
   const hDiff = playerCenterX - enemyCenterX;
   const baseAngle = Math.atan2(vDiff, hDiff);
 
-  // 角度のオフセット（ラジアン単位）を定義：真ん中、左、右
+  // 角度のオフセット（ラジアン単位）：真ん中、左、右に3発
   const angleOffsets = [0, -0.2, 0.2];
 
   angleOffsets.forEach(offset => {
@@ -494,16 +488,15 @@ function startEnemyGeneration() {
   enemyInterval = setInterval(() => {
     if (gamePaused || gameOver || gameClear) return;
     const rand = Math.random();
-    if (rand < 0.4) {          // 40%の確率でグレーの敵
-      spawnEnemy("gray");
-    } else if (rand < 0.7) {     // 30%でオレンジの敵
-      spawnEnemy("orange");
-    } else {                   // 30%でジグザグの敵
-      spawnEnemy("zigzag");
+    if (rand < 0.4) {
+      spawnEnemy("gray");   // 40%の確率でグレー
+    } else if (rand < 0.7) {
+      spawnEnemy("orange"); // 30%でオレンジ
+    } else {
+      spawnEnemy("zigzag"); // 30%でジグザグ
     }
   }, interval);
 }
-
 
 function spawnEnemy(type) {
   const width = 20;
@@ -522,7 +515,6 @@ function spawnEnemy(type) {
   if (type === "gray") {
     enemy.speed = 1.5 + Math.random() * 0.5;
     enemy.score = 10;
-    // グレーの敵も射撃可能にする
     enemy.canShoot = true;
     enemy.shootInterval = 120 + Math.floor(Math.random() * 50);
   } else if (type === "orange") {
@@ -545,19 +537,12 @@ function spawnEnemy(type) {
   enemies.push(enemy);
 }
 
-
 function updateEnemies() {
   for (let i = enemies.length - 1; i >= 0; i--) {
     let enemy = enemies[i];
     enemy.frameCount++;
     
-    if (enemy.type === "gray") {
-      enemy.y += enemy.speed;
-      // グレーの敵も一定間隔で玉を発射する
-      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
-        spawnEnemyBullet(enemy);
-      }
-    } else if (enemy.type === "orange") {
+    if (enemy.type === "gray" || enemy.type === "orange") {
       enemy.y += enemy.speed;
       if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
         spawnEnemyBullet(enemy);
@@ -575,6 +560,7 @@ function updateEnemies() {
       continue;
     }
     
+    // 敵の描画
     if (enemy.type === "gray" || enemy.type === "orange") {
       ctx.drawImage(sprites.enemies[enemy.type], enemy.x, enemy.y, enemy.width, enemy.height);
     } else if (enemy.type === "zigzag") {
@@ -596,7 +582,6 @@ function updateEnemies() {
     }
   }
 }
-
 
 function spawnPowerup() {
   if (gamePaused || gameOver || gameClear) return;
@@ -627,6 +612,7 @@ function updatePowerups() {
     ctx.drawImage(sprites.powerups[powerup.type], powerup.x, powerup.y, powerup.width, powerup.height);
   }
   
+  // パワーアップ（シールド含む）有効時間の管理
   if (playerPowerupType) {
     powerupTimer--;
     if (powerupTimer <= 0) {
@@ -681,21 +667,17 @@ function createExplosion(x, y, color, count = 15) {
   }, 50);
 }
 
-function isColliding(a, b) {
-  return a.x < b.x + b.width &&
-         a.x + a.width > b.x &&
-         a.y < b.y + b.height &&
-         a.y + a.height > b.y;
-}
-
+// ★★★ シールド対応の衝突判定 ★★★
 function checkCollisions() {
+  // 1) 被弾後の無敵時間のカウントダウン
   if (playerInvincible) {
     invincibleTimer--;
     if (invincibleTimer <= 0) {
       playerInvincible = false;
     }
   }
-  
+
+  // 2) プレイヤーの弾と敵の衝突判定
   for (let i = bullets.length - 1; i >= 0; i--) {
     const bullet = bullets[i];
     for (let j = enemies.length - 1; j >= 0; j--) {
@@ -720,8 +702,41 @@ function checkCollisions() {
       }
     }
   }
-  
-  if (!playerInvincible) {
+
+  // 3) シールド中の場合：敵や弾に当たっても残機が減らない
+  if (playerPowerupType === "shield") {
+    // (A) プレイヤーと敵の衝突
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      const enemy = enemies[i];
+      if (isColliding(player, enemy)) {
+        // シールドエフェクト（緑色の爆発）
+        createExplosion(
+          enemy.x + enemy.width / 2,
+          enemy.y + enemy.height / 2,
+          "#00ff00",
+          15
+        );
+        enemies.splice(i, 1);
+      }
+    }
+    // (B) プレイヤーと敵弾の衝突
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+      const bullet = enemyBullets[i];
+      if (isColliding(player, bullet)) {
+        // 弾かれた際のエフェクト
+        createExplosion(
+          bullet.x + bullet.width / 2,
+          bullet.y + bullet.height / 2,
+          "#00ff00",
+          10
+        );
+        enemyBullets.splice(i, 1);
+      }
+    }
+  }
+  // 4) シールドで無敵ではなく、かつ playerInvincible でもない時は通常被弾
+  else if (!playerInvincible) {
+    // (A) プレイヤーと敵の衝突
     for (let i = enemies.length - 1; i >= 0; i--) {
       const enemy = enemies[i];
       if (isColliding(player, enemy)) {
@@ -742,6 +757,7 @@ function checkCollisions() {
         }
       }
     }
+    // (B) プレイヤーと敵弾の衝突
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
       const bullet = enemyBullets[i];
       if (isColliding(player, bullet)) {
@@ -763,12 +779,13 @@ function checkCollisions() {
       }
     }
   }
-  
+
+  // 5) パワーアップ取得判定
   for (let i = powerups.length - 1; i >= 0; i--) {
     const powerup = powerups[i];
     if (isColliding(player, powerup)) {
       playerPowerupType = powerup.type;
-      powerupTimer = 600;
+      powerupTimer = 600; // 約10秒間シールドなどを有効化
       let pu = powerupTypes.find(p => p.name === powerup.type);
       if (pu) {
         showPowerupNotification(pu.text);
@@ -792,7 +809,6 @@ function handleTouchStart(e) {
     let touchX = touch.clientX - rect.left;
     let touchY = touch.clientY - rect.top;
     
-    // キャンバス内部の座標に変換
     if (touchX >= 0 && touchX <= canvas.width && touchY >= 0 && touchY <= canvas.height) {
       if (touchY > canvas.height * 0.8) {
         movementTouchId = touch.identifier;
@@ -834,14 +850,13 @@ function showPowerupNotification(text) {
   }, 2000);
 }
 
-// ゲームオーバー時の処理を修正
+// ゲームオーバー時の処理
 function endGame() {
   gamePaused = true;
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
   const overlay = document.getElementById("overlay");
   
-  // 異なるIDを使用してボタンを作成
   overlay.innerHTML = `
     <div class="instructions">
       <h2>GAME OVER</h2>
@@ -851,7 +866,6 @@ function endGame() {
   `;
   overlay.style.display = "flex";
   
-  // 一度だけイベントリスナーを追加
   const gameOverRestartBtn = document.getElementById("gameOverRestartBtn");
   gameOverRestartBtn.addEventListener("click", function() {
     overlay.style.display = "none";
@@ -859,7 +873,7 @@ function endGame() {
   });
 }
 
-// ゲームクリア後の処理も修正
+// ゲームクリア後の処理
 function showLocationCard() {
   gamePaused = true;
   if (enemyInterval) clearInterval(enemyInterval);
@@ -879,17 +893,22 @@ function showLocationCard() {
       document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
     });
   
-  // すでに存在するボタンにリスナーが重複して追加されないようにする
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
-    // 既存のイベントリスナーを削除（クリーンアップ）
     const newRestartBtn = restartBtn.cloneNode(true);
     restartBtn.parentNode.replaceChild(newRestartBtn, restartBtn);
     
-    // 新しいイベントリスナーを追加
     newRestartBtn.addEventListener("click", () => {
       locationCard.style.display = "none";
       initGame();
     });
   }
+}
+
+// 当たり判定用のヘルパー関数
+function isColliding(a, b) {
+  return a.x < b.x + b.width &&
+         a.x + a.width > b.x &&
+         a.y < b.y + b.height &&
+         a.y + a.height > b.y;
 }
