@@ -146,6 +146,187 @@ canvas {
   margin-top: 0;
 }
 
+/* 手がかり発見ポップアップ */
+.clue-discovery {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  animation: clueAppear 0.5s ease-out;
+}
+
+.clue-popup {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 2px solid #fff;
+  min-width: 280px;
+}
+
+.clue-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffff99;
+  display: block;
+  margin: 8px 0;
+}
+
+.clue-text {
+  font-size: 18px;
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+@keyframes clueAppear {
+  0% { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.8); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1); 
+  }
+}
+
+/* こんちゃん発見の豪華演出 */
+.discovery-celebration {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  animation: celebrationAppear 1s ease-out;
+}
+
+.celebration-message {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  margin-bottom: 2rem;
+  animation: bounceIn 1.5s ease-out;
+  text-align: center;
+}
+
+.celebration-submessage {
+  font-size: 1.5rem;
+  color: #ffff99;
+  margin-bottom: 3rem;
+  animation: fadeInUp 2s ease-out 0.5s both;
+  text-align: center;
+}
+
+/* キラキラエフェクト */
+.sparkle {
+  position: absolute;
+  color: #fff;
+  font-size: 2rem;
+  animation: sparkleFloat 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes sparkleFloat {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  50% { transform: translateY(-50px) rotate(180deg); opacity: 0.8; }
+  100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes celebrationAppear {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  0% { transform: translateY(50px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* 拡大されたロケーションカード */
+#locationCard.enhanced {
+  background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(20,20,60,0.9));
+}
+
+#locationCard.enhanced .card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 90%;
+  max-width: 600px;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  border: 3px solid #fff;
+  animation: cardEnhancedAppear 1s ease-out;
+}
+
+#locationCard.enhanced h1 {
+  font-size: 3rem;
+  color: #fff;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  margin-bottom: 30px;
+}
+
+#locationCard.enhanced p {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+#locationCard.enhanced #status {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffff99;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  display: block;
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  border: 2px solid #ffff99;
+}
+
+#locationCard.enhanced #restartBtn {
+  font-size: 1.5rem;
+  padding: 20px 40px;
+  margin-top: 30px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  border: none;
+  border-radius: 50px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(238, 90, 36, 0.4);
+}
+
+#locationCard.enhanced #restartBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(238, 90, 36, 0.6);
+}
+
+@keyframes cardEnhancedAppear {
+  0% { transform: scale(0.8) translateY(50px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
 /* レスポンシブ調整 */
 @media (max-width: 768px) {
   #overlay {
@@ -175,6 +356,31 @@ canvas {
     width: 85%;
     max-height: 80vh;
     overflow-y: auto;
+  }
+  
+  .celebration-message {
+    font-size: 2.5rem;
+  }
+  
+  .celebration-submessage {
+    font-size: 1.2rem;
+  }
+  
+  #locationCard.enhanced .card {
+    width: 95%;
+    padding: 30px 20px;
+  }
+  
+  #locationCard.enhanced h1 {
+    font-size: 2rem;
+  }
+  
+  #locationCard.enhanced p {
+    font-size: 1.2rem;
+  }
+  
+  #locationCard.enhanced #status {
+    font-size: 1.5rem;
   }
 }
 

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>テスト</title>
+  <style>
+    body { margin: 0; background: #121212; color: white; }
+    canvas { border: 2px solid #4a5eff; display: block; margin: 20px auto; }
+  </style>
+</head>
+<body>
+  <h1>テスト画面</h1>
+  <canvas id="gameCanvas" width="400" height="300"></canvas>
+  <script>
+    console.log("Test script running...");
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    
+    // 簡単な描画テスト
+    ctx.fillStyle = "#4a5eff";
+    ctx.fillRect(50, 50, 100, 100);
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Test", 150, 100);
+    
+    console.log("Test complete!");
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <div id="debug-output"></div>
+    
+    <script>
+        console.log("Script starting...");
+        document.getElementById('debug-output').innerHTML = "Script loaded successfully!";
+        
+        // script.jsを読み込む前にテスト
+        try {
+            console.log("Testing basic JS...");
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById('debug-output').innerHTML = "Error: " + error.message;
+        }
+    </script>
+    
+    <script>
+        // script.jsの最初の数行を手動でテスト
+        try {
+            const targetScore = 100;
+            let canvas, ctx;
+            console.log("Basic variables created successfully");
+            document.getElementById('debug-output').innerHTML += "<br>Basic variables OK";
+        } catch (error) {
+            console.error("Variable error:", error);
+            document.getElementById('debug-output').innerHTML += "<br>Variable error: " + error.message;
+        }
+    </script>
+</body>
+</html>
