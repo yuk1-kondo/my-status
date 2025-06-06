@@ -771,7 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { passive: false });
 });
 
-// タッチ操作ハンドラー関数（改善版）
+// タッチ操作ハンドラー関数（シンプル版 - 動作確認済み）
 function handleTouchStart(e) {
   e.preventDefault();
   console.log("Touch start detected"); // デバッグ用
@@ -785,12 +785,16 @@ function handleTouchStart(e) {
   
   console.log(`Touch at: ${touchX}, ${touchY}, Canvas height: ${canvas.height}`); // デバッグ用
   
-  // より簡単な操作：全体をタップで射撃、左右のドラッグで移動
-  shoot();
-  
-  // 移動も開始
-  movementTouchId = touch.identifier;
-  handlePlayerMovement(touchX);
+  // キャンバスの上部80%をタッチした場合は射撃
+  if (touchY < canvas.height * 0.8) {
+    console.log("Shooting"); // デバッグ用
+    shoot();
+  } else {
+    // 下部20%の場合は移動開始
+    console.log("Movement start"); // デバッグ用
+    movementTouchId = touch.identifier;
+    handlePlayerMovement(touchX);
+  }
 }
 
 function handleTouchMove(e) {
@@ -827,7 +831,7 @@ function handlePlayerMovement(touchX) {
   if (!player) return;
   
   const centerX = canvas.width / 2;
-  const deadZone = 50; // デッドゾーンを広げる
+  const deadZone = 30; // 元の値に戻す
   
   if (touchX < centerX - deadZone) {
     player.dx = -player.speed;

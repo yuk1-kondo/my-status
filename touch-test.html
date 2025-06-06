@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タッチテスト</title>
+  <style>
+    body { 
+      margin: 0; 
+      background: #121212; 
+      color: white; 
+      font-family: Arial; 
+      padding: 20px; 
+    }
+    canvas { 
+      border: 2px solid #4a5eff; 
+      display: block; 
+      margin: 20px auto; 
+      touch-action: manipulation;
+      background: #05071b;
+    }
+    #log {
+      background: #333;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>スマホタッチ操作テスト</h1>
+  <div id="log">ログ出力...</div>
+  <canvas id="gameCanvas" width="300" height="200"></canvas>
+  <div id="info">画面をタップして操作をテストしてください</div>
+  
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const log = document.getElementById("log");
+    
+    function addLog(message) {
+      console.log(message);
+      log.innerHTML += message + "<br>";
+      log.scrollTop = log.scrollHeight;
+    }
+    
+    addLog("スクリプト開始");
+    
+    // プレイヤーオブジェクト
+    const player = {
+      x: canvas.width / 2 - 15,
+      y: canvas.height - 30,
+      width: 30,
+      height: 20,
+      dx: 0,
+      speed: 3
+    };
+    
+    // 描画関数
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // プレイヤー描画
+      ctx.fillStyle = "#4a5eff";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      
+      // 更新
+      player.x += player.dx;
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+      
+      requestAnimationFrame(draw);
+    }
+    
+    // タッチイベント
+    canvas.addEventListener("touchstart", function(e) {
+      e.preventDefault();
+      addLog("タッチ開始！");
+      
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      
+      addLog(`タッチ位置: ${touchX}`);
+      
+      // 移動方向決定
+      const centerX = canvas.width / 2;
+      if (touchX < centerX) {
+        player.dx = -player.speed;
+        addLog("左移動開始");
+      } else {
+        player.dx = player.speed;
+        addLog("右移動開始");
+      }
+    }, { passive: false });
+    
+    canvas.addEventListener("touchend", function(e) {
+      e.preventDefault();
+      addLog("タッチ終了 - 移動停止");
+      player.dx = 0;
+    }, { passive: false });
+    
+    canvas.addEventListener("touchmove", function(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      
+      const centerX = canvas.width / 2;
+      if (touchX < centerX) {
+        player.dx = -player.speed;
+      } else {
+        player.dx = player.speed;
+      }
+    }, { passive: false });
+    
+    // スクロール防止
+    document.body.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+    
+    // 描画開始
+    draw();
+    addLog("テスト準備完了");
+  </script>
+</body>
+</html>

@@ -1,15 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head      <ul>
-        <li>【スマホ】画面をタップで弾を発射・ドラッグで左右移動。</li>
-        <li>【PC】←→キーで移動、スペース/Enterで弾を発射。</li>
-        <li><span style="color:#aaaaaa">■</span> <b>グレー</b>の敵: +10点</li>
-        <li><span style="color:#ffa500">●</span> <b>オレンジ</b>の敵: -5点</li>
-        <li><span style="color:#ff3366">■</span> <b>ジグザグ</b>の敵: ランダム移動・倒すと-10点、衝突すると-20点</li>
-        <li><span style="color:#ffff00">★</span> <b>パワーアップアイテム</b></li>
-        <li>ゲームクリア条件: <b>100点到達</b></li>
-        <li>プレイヤーの残機は3つ、敵と衝突・弾に当たると残機が減ります</li>
-      </ul>charset="UTF-8">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>こんちゃんイマドコシューティング DX</title>
   <link rel="stylesheet" href="style.css">
@@ -18,25 +10,24 @@
   <!-- ゲームキャンバス -->
   <canvas id="gameCanvas"></canvas>
   
-  <!-- 外部HUDを削除 -->
-  <!-- 
-  <div id="gameHUD">
-    <div>スコア: <span id="scoreDisplay">0</span></div>
-    <div>残機: <span id="livesDisplay">3</span></div>
-    <div>レベル: <span id="levelDisplay">1</span></div>
-  </div>
-  -->
-  
   <!-- パワーアップ通知 -->
   <div id="powerupNotification"></div>
   
-  <!-- ゲームクリア後の「イマドコ」カード -->
-  <div id="locationCard">
-    <div class="card">
-      <h1>こんちゃんイマココ</h1>
-      <p><strong>イマココ:</strong> <span id="status">読み込み中...</span></p>
-      <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
-      <button id="restartBtn">もう一度プレイ</button>
+  <!-- ゲームクリア画面 -->
+  <div id="gameClearOverlay" style="display: none;">
+    <div class="clear-content">
+      <h2>🎉 ゲームクリア！ 🎉</h2>
+      <p>スコア: <span id="finalScore">0</span></p>
+      <button id="restartBtn" onclick="location.reload()">もう一度プレイ</button>
+    </div>
+  </div>
+  
+  <!-- ゲームオーバー画面 -->
+  <div id="gameOverOverlay" style="display: none;">
+    <div class="gameover-content">
+      <h2>ゲームオーバー</h2>
+      <p>スコア: <span id="gameOverScore">0</span></p>
+      <button id="gameOverRestartBtn" onclick="location.reload()">リトライ</button>
     </div>
   </div>
   
@@ -54,11 +45,43 @@
         <li>ゲームクリア条件: <b>100点到達</b></li>
         <li>プレイヤーの残機は3つ、敵と衝突・弾に当たると残機が減ります</li>
       </ul>
-      <p>✨ 頑張ってください！ ✨</p>
+      
+      <h3>🔍 追跡ミッション</h3>
+      <ul>
+        <li><b>30点</b>でこんちゃんの居場所の手がかりを発見</li>
+        <li><b>60点</b>でより詳細な位置情報を入手</li>
+        <li><b>100点</b>で正確な現在地を特定！</li>
+      </ul>
     </div>
-    <button id="startBtn">PLAY GAME</button>
+    <button id="startBtn">ゲームスタート</button>
   </div>
   
-  <script src="script.js" defer></script>
+  <!-- 手がかり発見オーバーレイ -->
+  <div id="clueOverlay" style="display: none;">
+    <div class="clue-content">
+      <h2 id="clueTitle">手がかり発見！</h2>
+      <div id="clueText"></div>
+      <button id="continueBtn">続行</button>
+    </div>
+  </div>
+  
+  <!-- 最終発見時の特別表示 -->
+  <div id="finalDiscoveryOverlay" style="display: none;">
+    <div class="final-discovery-content">
+      <h2>🎯 こんちゃん発見！ 🎯</h2>
+      <div id="finalLocationCard" class="location-card enhanced">
+        <div class="sparkle-container">
+          <div class="sparkle" style="animation-delay: 0s;"></div>
+          <div class="sparkle" style="animation-delay: 0.5s;"></div>
+          <div class="sparkle" style="animation-delay: 1s;"></div>
+          <div class="sparkle" style="animation-delay: 1.5s;"></div>
+        </div>
+        <div id="finalLocationDetails"></div>
+      </div>
+      <button id="finalContinueBtn">ゲーム続行</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

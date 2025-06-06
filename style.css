@@ -10,6 +10,11 @@ html, body {
   position: fixed; /* モバイル用にスクロールを完全に防止 */
   top: 0;
   left: 0;
+  -webkit-user-select: none; /* テキスト選択を防止 */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  text-size-adjust: none; /* モバイルでのテキストサイズ自動調整を防止 */
 }
 
 /* キャンバススタイル */
@@ -21,6 +26,7 @@ canvas {
   box-sizing: border-box;
   position: absolute;
   cursor: crosshair; /* PCでの視覚的フィードバック */
+  z-index: 1; /* 他の要素より前面に表示 */
 }
 
 /* 外部HUDは不要になったため削除または無効化 */
