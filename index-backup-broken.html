@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head      <ul>
+        <li>【スマホ】画面をタップで弾を発射・ドラッグで左右移動。</li>
+        <li>【PC】←→キーで移動、スペース/Enterで弾を発射。</li>
+        <li><span style="color:#aaaaaa">■</span> <b>グレー</b>の敵: +10点</li>
+        <li><span style="color:#ffa500">●</span> <b>オレンジ</b>の敵: -5点</li>
+        <li><span style="color:#ff3366">■</span> <b>ジグザグ</b>の敵: ランダム移動・倒すと-10点、衝突すると-20点</li>
+        <li><span style="color:#ffff00">★</span> <b>パワーアップアイテム</b></li>
+        <li>ゲームクリア条件: <b>100点到達</b></li>
+        <li>プレイヤーの残機は3つ、敵と衝突・弾に当たると残機が減ります</li>
+      </ul>charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>こんちゃんイマドコシューティング DX</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ゲームキャンバス -->
+  <canvas id="gameCanvas"></canvas>
+  
+  <!-- 外部HUDを削除 -->
+  <!-- 
+  <div id="gameHUD">
+    <div>スコア: <span id="scoreDisplay">0</span></div>
+    <div>残機: <span id="livesDisplay">3</span></div>
+    <div>レベル: <span id="levelDisplay">1</span></div>
+  </div>
+  -->
+  
+  <!-- パワーアップ通知 -->
+  <div id="powerupNotification"></div>
+  
+  <!-- ゲームクリア後の「イマドコ」カード -->
+  <div id="locationCard">
+    <div class="card">
+      <h1>こんちゃんイマココ</h1>
+      <p><strong>イマココ:</strong> <span id="status">読み込み中...</span></p>
+      <p><strong>最終更新:</strong> <span id="lastUpdated">読み込み中...</span></p>
+      <button id="restartBtn">もう一度プレイ</button>
+    </div>
+  </div>
+  
+  <!-- オーバーレイ（説明文＋スタートボタン） -->
+  <div id="overlay">
+    <div class="instructions">
+      <h2>こんちゃんイマドコシューティング DX</h2>
+      <ul>
+        <li>【スマホ】キャンバス上部80％をタップで弾を発射、下部20％で左右移動。</li>
+        <li>【PC】←→キーで移動、スペース/Enterで弾を発射。</li>
+        <li><span style="color:#aaaaaa">■</span> <b>グレー</b>の敵: +10点</li>
+        <li><span style="color:#ffa500">●</span> <b>オレンジ</b>の敵: -5点</li>
+        <li><span style="color:#ff3366">■</span> <b>ジグザグ</b>の敵: ランダム移動・倒すと-10点、衝突すると-20点</li>
+        <li><span style="color:#ffff00">★</span> <b>パワーアップアイテム</b></li>
+        <li>ゲームクリア条件: <b>100点到達</b></li>
+        <li>プレイヤーの残機は3つ、敵と衝突・弾に当たると残機が減ります</li>
+      </ul>
+      <p>✨ 頑張ってください！ ✨</p>
+    </div>
+    <button id="startBtn">PLAY GAME</button>
+  </div>
+  
+  <script src="script.js" defer></script>
+</body>
+</html>

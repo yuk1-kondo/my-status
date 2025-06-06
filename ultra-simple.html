@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>極シンプルゲーム</title>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: Arial; }
+        canvas { border: 2px solid #fff; display: block; margin: 20px auto; }
+        #info { text-align: center; margin: 10px; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h2>極シンプルゲーム</h2>
+        <p>矢印キーで移動、スペースで弾発射</p>
+        <button onclick="startGame()">開始</button>
+    </div>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameRunning = false;
+        let player = { x: 275, y: 350, width: 50, height: 30, dx: 0 };
+        let bullets = [];
+        let enemies = [];
+        let keys = {};
+        
+        console.log("Script loaded");
+        
+        function startGame() {
+            console.log("Game starting...");
+            gameRunning = true;
+            document.getElementById('info').style.display = 'none';
+            gameLoop();
+            
+            // 敵を定期的に生成
+            setInterval(() => {
+                if (gameRunning) {
+                    enemies.push({
+                        x: Math.random() * (canvas.width - 30),
+                        y: -30,
+                        width: 30,
+                        height: 30,
+                        dy: 3
+                    });
+                }
+            }, 1000);
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // クリア
+            ctx.fillStyle = '#001122';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // プレイヤー更新
+            if (keys['ArrowLeft'] && player.x > 0) player.x -= 5;
+            if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += 5;
+            
+            // プレイヤー描画
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // 弾の更新・描画
+            bullets.forEach((bullet, index) => {
+                bullet.y -= 8;
+                if (bullet.y < 0) {
+                    bullets.splice(index, 1);
+                    return;
+                }
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+            
+            // 敵の更新・描画
+            enemies.forEach((enemy, index) => {
+                enemy.y += enemy.dy;
+                if (enemy.y > canvas.height) {
+                    enemies.splice(index, 1);
+                    return;
+                }
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            });
+            
+            // 当たり判定
+            bullets.forEach((bullet, bIndex) => {
+                enemies.forEach((enemy, eIndex) => {
+                    if (bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y) {
+                        bullets.splice(bIndex, 1);
+                        enemies.splice(eIndex, 1);
+                    }
+                });
+            });
+            
+            // 情報表示
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px Arial';
+            ctx.fillText('敵: ' + enemies.length + ' 弾: ' + bullets.length, 10, 30);
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // キーボード操作
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (e.code === 'Space' && gameRunning) {
+                e.preventDefault();
+                bullets.push({
+                    x: player.x + player.width/2 - 2,
+                    y: player.y,
+                    width: 4,
+                    height: 10
+                });
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+        
+        console.log("All functions defined");
+    </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Test</title>
+  <style>
+    body { margin: 0; background: #000; }
+    canvas { display: block; margin: 0 auto; background: #001122; }
+    #debug { color: white; position: absolute; top: 10px; left: 10px; }
+  </style>
+</head>
+<body>
+  <div id="debug">Debug Info:</div>
+  <canvas id="gameCanvas" width="640" height="480"></canvas>
+  
+  <script>
+    console.log("Starting debug test...");
+    
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const debugDiv = document.getElementById("debug");
+    
+    console.log("Canvas:", canvas);
+    console.log("Context:", ctx);
+    
+    if (canvas && ctx) {
+      debugDiv.innerHTML += "<br>Canvas found: " + canvas.width + "x" + canvas.height;
+      debugDiv.innerHTML += "<br>Context: " + (ctx ? "OK" : "FAILED");
+      
+      // 簡単な描画テスト
+      ctx.fillStyle = "#4a5eff";
+      ctx.fillRect(100, 100, 50, 50);
+      
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "20px Arial";
+      ctx.fillText("Test Draw", 200, 200);
+      
+      debugDiv.innerHTML += "<br>Drawing completed";
+    } else {
+      debugDiv.innerHTML += "<br>Canvas or context failed to initialize";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ゲーム診断テスト</title>
+  <style>
+    body { 
+      margin: 0; 
+      background: #222; 
+      color: white; 
+      font-family: Arial; 
+    }
+    canvas { 
+      display: block; 
+      margin: 20px auto; 
+      background: #001122; 
+      border: 2px solid #4a5eff;
+    }
+    .info { 
+      text-align: center; 
+      margin: 10px; 
+    }
+    button { 
+      padding: 10px 20px; 
+      font-size: 16px; 
+      margin: 5px; 
+      background: #4a5eff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #log {
+      background: rgba(0,0,0,0.8);
+      padding: 10px;
+      margin: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="info">
+    <h2>ゲーム診断テスト</h2>
+    <canvas id="gameCanvas" width="640" height="480"></canvas>
+    <div>
+      <button onclick="basicTest()">基本描画テスト</button>
+      <button onclick="gameElementTest()">ゲーム要素テスト</button>
+      <button onclick="startSimpleGame()">簡易ゲーム開始</button>
+      <button onclick="clearCanvas()">クリア</button>
+    </div>
+  </div>
+  
+  <div id="log">診断ログ:<br></div>
+  
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const log = document.getElementById("log");
+    
+    function addLog(message) {
+      console.log(message);
+      log.innerHTML += new Date().toLocaleTimeString() + ": " + message + "<br>";
+      log.scrollTop = log.scrollHeight;
+    }
+    
+    addLog("診断テスト開始");
+    addLog("Canvas: " + (canvas ? "OK" : "FAILED"));
+    addLog("Context: " + (ctx ? "OK" : "FAILED"));
+    addLog("Canvas size: " + canvas.width + "x" + canvas.height);
+    
+    function clearCanvas() {
+      ctx.fillStyle = "#001122";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      addLog("キャンバスをクリア");
+    }
+    
+    function basicTest() {
+      clearCanvas();
+      
+      // 背景
+      ctx.fillStyle = "#000011";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // プレイヤー風
+      ctx.fillStyle = "#4a5eff";
+      ctx.fillRect(300, 400, 30, 30);
+      
+      // 敵風
+      ctx.fillStyle = "#aaaaaa";
+      ctx.fillRect(100, 100, 20, 20);
+      ctx.fillStyle = "#ffa500";
+      ctx.fillRect(200, 150, 20, 20);
+      
+      // 弾風
+      ctx.fillStyle = "#ffff00";
+      ctx.fillRect(310, 350, 5, 10);
+      ctx.fillRect(315, 300, 5, 10);
+      
+      // HUD風
+      ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.fillRect(10, 10, 150, 70);
+      ctx.strokeStyle = "#4a5eff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(10, 10, 150, 70);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "14px Arial";
+      ctx.fillText("スコア: 0", 20, 30);
+      ctx.fillText("残機: 3", 20, 50);
+      ctx.fillText("レベル: 1", 20, 70);
+      
+      addLog("基本描画テスト完了");
+    }
+    
+    // 実際のゲームのプレイヤースプライト生成をテスト
+    function createPlayerSprite() {
+      const playerCanvas = document.createElement('canvas');
+      playerCanvas.width = 30;
+      playerCanvas.height = 40;
+      const pCtx = playerCanvas.getContext('2d');
+      
+      pCtx.fillStyle = "#4a5eff";
+      pCtx.beginPath();
+      pCtx.moveTo(15, 0);
+      pCtx.lineTo(0, 25);
+      pCtx.lineTo(30, 25);
+      pCtx.closePath();
+      pCtx.fill();
+      
+      return playerCanvas;
+    }
+    
+    function gameElementTest() {
+      clearCanvas();
+      
+      addLog("ゲーム要素テストを開始");
+      
+      // プレイヤースプライトテスト
+      const playerSprite = createPlayerSprite();
+      ctx.drawImage(playerSprite, 300, 400, 30, 40);
+      addLog("プレイヤースプライト描画: OK");
+      
+      // アニメーション要素のテスト
+      let frame = 0;
+      const animTest = setInterval(() => {
+        // 背景
+        ctx.fillStyle = "#000011";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // アニメーションするプレイヤー
+        ctx.drawImage(playerSprite, 300 + Math.sin(frame * 0.1) * 50, 400, 30, 40);
+        
+        // 動く弾
+        ctx.fillStyle = "#ffff00";
+        ctx.fillRect(310, 400 - frame * 5, 5, 10);
+        
+        // フレームカウンター
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "16px Arial";
+        ctx.fillText("Frame: " + frame, 10, 30);
+        
+        frame++;
+        if (frame > 80) {
+          clearInterval(animTest);
+          addLog("アニメーションテスト完了");
+        }
+      }, 50);
+    }
+    
+    let simpleGameRunning = false;
+    function startSimpleGame() {
+      if (simpleGameRunning) return;
+      simpleGameRunning = true;
+      
+      addLog("簡易ゲーム開始");
+      
+      const player = { x: 300, y: 400, dx: 0 };
+      const bullets = [];
+      const enemies = [];
+      let score = 0;
+      
+      // キー入力
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") player.dx = -3;
+        if (e.key === "ArrowRight") player.dx = 3;
+        if (e.key === " ") {
+          bullets.push({ x: player.x + 12, y: player.y, speed: 5 });
+          e.preventDefault();
+        }
+      });
+      
+      document.addEventListener("keyup", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
+      });
+      
+      // 敵生成
+      setInterval(() => {
+        if (simpleGameRunning) {
+          enemies.push({ x: Math.random() * 600, y: 0, speed: 2 });
+        }
+      }, 2000);
+      
+      // ゲームループ
+      function gameLoop() {
+        if (!simpleGameRunning) return;
+        
+        // 背景
+        ctx.fillStyle = "#000011";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // プレイヤー更新・描画
+        player.x += player.dx;
+        if (player.x < 0) player.x = 0;
+        if (player.x > canvas.width - 30) player.x = canvas.width - 30;
+        
+        ctx.fillStyle = "#4a5eff";
+        ctx.fillRect(player.x, player.y, 30, 30);
+        
+        // 弾更新・描画
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          bullets[i].y -= bullets[i].speed;
+          if (bullets[i].y < 0) {
+            bullets.splice(i, 1);
+            continue;
+          }
+          ctx.fillStyle = "#ffff00";
+          ctx.fillRect(bullets[i].x, bullets[i].y, 5, 10);
+        }
+        
+        // 敵更新・描画
+        for (let i = enemies.length - 1; i >= 0; i--) {
+          enemies[i].y += enemies[i].speed;
+          if (enemies[i].y > canvas.height) {
+            enemies.splice(i, 1);
+            continue;
+          }
+          ctx.fillStyle = "#ff3366";
+          ctx.fillRect(enemies[i].x, enemies[i].y, 20, 20);
+        }
+        
+        // 当たり判定（簡単）
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          for (let j = enemies.length - 1; j >= 0; j--) {
+            if (bullets[i] && enemies[j] && 
+                bullets[i].x < enemies[j].x + 20 &&
+                bullets[i].x + 5 > enemies[j].x &&
+                bullets[i].y < enemies[j].y + 20 &&
+                bullets[i].y + 10 > enemies[j].y) {
+              bullets.splice(i, 1);
+              enemies.splice(j, 1);
+              score += 10;
+              break;
+            }
+          }
+        }
+        
+        // HUD
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "16px Arial";
+        ctx.fillText("スコア: " + score, 10, 30);
+        ctx.fillText("←→で移動、スペースで射撃", 10, canvas.height - 20);
+        
+        requestAnimationFrame(gameLoop);
+      }
+      
+      gameLoop();
+    }
+    
+    // 初期描画
+    basicTest();
+  </script>
+</body>
+</html>

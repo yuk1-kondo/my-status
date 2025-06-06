@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最小テスト</title>
+  <style>
+    body { margin: 0; background: #000; font-family: Arial; }
+    canvas { display: block; margin: 20px auto; background: #001122; }
+    #info { color: white; text-align: center; }
+    button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+  </style>
+</head>
+<body>
+  <div id="info">最小機能テスト</div>
+  <canvas id="testCanvas" width="400" height="300"></canvas>
+  <div style="text-align: center;">
+    <button onclick="drawTest()">描画テスト</button>
+    <button onclick="animTest()">アニメーションテスト</button>
+  </div>
+  
+  <script>
+    const canvas = document.getElementById("testCanvas");
+    const ctx = canvas.getContext("2d");
+    let animId = null;
+    
+    console.log("Canvas:", canvas);
+    console.log("Context:", ctx);
+    
+    function drawTest() {
+      console.log("Drawing test...");
+      
+      // 背景をクリア
+      ctx.fillStyle = "#001122";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // プレイヤーのような形を描画
+      ctx.fillStyle = "#4a5eff";
+      ctx.fillRect(180, 250, 40, 30);
+      
+      // 敵のような形を描画
+      ctx.fillStyle = "#aaaaaa";
+      ctx.fillRect(100, 50, 20, 20);
+      ctx.fillRect(280, 80, 20, 20);
+      
+      // 弾のような形を描画
+      ctx.fillStyle = "#ffff00";
+      ctx.fillRect(195, 200, 5, 10);
+      ctx.fillRect(195, 150, 5, 10);
+      
+      // テキスト描画
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "16px Arial";
+      ctx.fillText("描画テスト成功！", 120, 30);
+      
+      console.log("Drawing completed");
+    }
+    
+    let y = 0;
+    function animTest() {
+      console.log("Animation test...");
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+        return;
+      }
+      
+      function animate() {
+        // 背景をクリア
+        ctx.fillStyle = "#001122";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 動く円を描画
+        ctx.fillStyle = "#ff3366";
+        ctx.beginPath();
+        ctx.arc(200 + Math.sin(y * 0.05) * 100, 150, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // カウンター表示
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "16px Arial";
+        ctx.fillText("Frame: " + y, 10, 30);
+        
+        y++;
+        animId = requestAnimationFrame(animate);
+      }
+      
+      animate();
+    }
+    
+    // 初期描画
+    drawTest();
+  </script>
+</body>
+</html>
