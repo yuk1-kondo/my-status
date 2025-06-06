@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>クイックテスト</title>
+  <style>
+    body { 
+      background: #121212; 
+      color: white; 
+      font-family: Arial; 
+      padding: 20px; 
+    }
+    canvas { 
+      border: 2px solid #4a5eff; 
+      display: block; 
+      margin: 20px auto; 
+    }
+  </style>
+</head>
+<body>
+  <h1>ゲーム動作テスト</h1>
+  <canvas id="gameCanvas" width="400" height="300"></canvas>
+  <div id="info">テスト中...</div>
+  
+  <script>
+    console.log("スクリプト開始");
+    
+    try {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      
+      if (canvas && ctx) {
+        // 背景描画
+        ctx.fillStyle = "#05071b";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // テスト図形
+        ctx.fillStyle = "#4a5eff";
+        ctx.fillRect(50, 50, 100, 100);
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.fillText("テスト成功！", 200, 100);
+        
+        document.getElementById("info").textContent = "✅ キャンバス動作正常";
+        console.log("キャンバステスト成功");
+      } else {
+        throw new Error("キャンバス取得失敗");
+      }
+      
+      // script.jsの最初の部分をテスト
+      const targetScore = 100;
+      console.log("定数テスト OK:", targetScore);
+      
+      document.getElementById("info").innerHTML += "<br>✅ JavaScript基本動作正常";
+      
+    } catch (error) {
+      console.error("エラー:", error);
+      document.getElementById("info").innerHTML = "❌ エラー: " + error.message;
+    }
+  </script>
+</body>
+</html>
