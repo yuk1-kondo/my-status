@@ -443,7 +443,7 @@ function initGame() {
 
 //キャンバス上にHUDを描画する
 function drawHUD() {
-  // 背景
+  // HUD情報の背景
   ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
   ctx.fillRect(10, 10, 150, 70);
   
