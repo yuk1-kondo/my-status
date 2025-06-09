@@ -302,6 +302,65 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { passive: false });
 });
 
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+// ★★★ ここから下に関数を追加 ★★★
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+/* タッチ操作ハンドラ */
+function handleTouchStart(e) {
+  if (gameOver || gameClear || gamePaused || !player) return;
+  e.preventDefault(); // スクロール等のデフォルト動作を防ぐ
+
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    const touchY = touch.clientY - canvas.getBoundingClientRect().top;
+    const touchX = touch.clientX - canvas.getBoundingClientRect().left;
+
+    // 画面下部20%は移動
+    if (touchY > canvas.height * 0.8) {
+      movementTouchId = touch.identifier;
+      if (touchX < canvas.width / 2) {
+        player.dx = -player.speed;
+      } else {
+        player.dx = player.speed;
+      }
+    } else { // それ以外は弾発射
+      shoot();
+    }
+  }
+}
+
+function handleTouchMove(e) {
+  if (gameOver || gameClear || gamePaused || !player || movementTouchId === null) return;
+  e.preventDefault();
+
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    if (touch.identifier === movementTouchId) {
+      const touchX = touch.clientX - canvas.getBoundingClientRect().left;
+      if (touchX < canvas.width / 2) {
+        player.dx = -player.speed;
+      } else {
+        player.dx = player.speed;
+      }
+      break;
+    }
+  }
+}
+
+function handleTouchEnd(e) {
+  if (gameOver || gameClear || gamePaused || !player) return;
+  e.preventDefault();
+
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const touch = e.changedTouches[i];
+    if (touch.identifier === movementTouchId) {
+      player.dx = 0;
+      movementTouchId = null;
+      break;
+    }
+  }
+}
+
 function setCanvasSize() {
   const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
   const windowWidth = window.innerWidth;
@@ -828,189 +887,92 @@ function drawTrackingUI(ctx) {
 
 // ゲームオーバー時の処理
 function endGame() {
-  gamePaused = true;
-  if (enemyInterval) clearInterval(enemyInterval);
-  if (powerupInterval) clearInterval(powerupInterval);
-  const overlay = document.getElementById("overlay");
+  gameOver = true;
+  clearInterval(enemyInterval);
+  clearInterval(powerupInterval);
+  cancelAnimationFrame(gameLoopId);
   
-  overlay.innerHTML = `
-    <div class="instructions">
-      <h2>GAME OVER</h2>
-      <p>残機がなくなりました。</p>
-      <button id="gameOverRestartBtn">リスタート</button>
-    </div>
-  `;
-  overlay.style.display = "flex";
+  // 最終スコアの表示
+  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+  ctx.fillRect(50, 50, canvas.width - 100, canvas.height - 100);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 24px Arial";
+  ctx.fillText("ゲームオーバー", canvas.width / 2 - 60, canvas.height / 2 - 20);
+  ctx.font = "18px Arial";
+  ctx.fillText(`最終スコア: ${score}`, canvas.width / 2 - 50, canvas.height / 2 + 10);
   
-  const gameOverRestartBtn = document.getElementById("gameOverRestartBtn");
-  gameOverRestartBtn.addEventListener("click", function() {
-    overlay.style.display = "none";
-    initGame();
-  });
+  document.getElementById("locationCard").style.display = "none";
+  document.getElementById("overlay").style.display = "block";
+  document.getElementById("restartBtn").style.display = "inline-block";
 }
 
-// ゲームクリア後の処理
-function showLocationCard() {
-  gamePaused = true;
-  if (enemyInterval) clearInterval(enemyInterval);
-  if (powerupInterval) clearInterval(powerupInterval);
-  
-  // 最終手がかり発見の演出
-  if (investigationProgress >= 100) {
-    showFinalLocationReveal();
-  }
-  
-  // 豪華な発見演出を開始
-  showDiscoveryCelebration();
-}
+// リスタートボタンの処理
+document.getElementById("restartBtn").addEventListener("click", () => {
+  document.getElementById("overlay").style.display = "none";
+  initGame();
+});
 
-// 豪華な「こんちゃん発見」演出
-function showDiscoveryCelebration() {
-  // 1. フルスクリーンお祝い画面を作成
-  const celebration = document.createElement('div');
-  celebration.className = 'discovery-celebration';
-  celebration.innerHTML = `
-    <div class="celebration-message">🎉 こんちゃん発見！ 🎉</div>
-    <div class="celebration-submessage">すべての手がかりを集めました！</div>
-  `;
-  document.body.appendChild(celebration);
-  
-  // 2. キラキラエフェクトを追加
-  createSparkleEffect(celebration);
-  
-  // 3. 3秒後に位置情報カードを表示
-  setTimeout(() => {
-    celebration.remove();
-    showEnhancedLocationCard();
-  }, 3000);
-}
-
-// キラキラエフェクト
-function createSparkleEffect(container) {
-  const sparkleSymbols = ['✨', '⭐', '💫', '🌟', '✴️'];
-  
-  for (let i = 0; i < 20; i++) {
-    setTimeout(() => {
-      const sparkle = document.createElement('div');
-      sparkle.className = 'sparkle';
-      sparkle.textContent = sparkleSymbols[Math.floor(Math.random() * sparkleSymbols.length)];
-      sparkle.style.left = Math.random() * 100 + '%';
-      sparkle.style.top = Math.random() * 100 + '%';
-      sparkle.style.animationDelay = Math.random() * 2 + 's';
-      container.appendChild(sparkle);
-      
-      // 3秒後に削除
-      setTimeout(() => {
-        if (sparkle.parentNode) {
-          sparkle.remove();
-        }
-      }, 3000);
-    }, i * 100);
+// ポーズ・再開の処理
+function togglePause() {
+  gamePaused = !gamePaused;
+  if (gamePaused) {
+    clearInterval(enemyInterval);
+    clearInterval(powerupInterval);
+    cancelAnimationFrame(gameLoopId);
+  } else {
+    startEnemyGeneration();
+    powerupInterval = setInterval(spawnPowerup, 15000);
+    gameLoop();
   }
 }
 
-// 拡張されたロケーションカード表示
-function showEnhancedLocationCard() {
-  const locationCard = document.getElementById("locationCard");
-  locationCard.classList.add('enhanced');
-  locationCard.style.display = "flex";
-  
-  // 位置情報を取得して表示
-  fetch("location.json")
-    .then(response => response.json())
-    .then(data => {
-      // アニメーション付きで位置情報を表示
-      setTimeout(() => {
-        document.getElementById("status").textContent = data.status.trim();
-        document.getElementById("lastUpdated").textContent = data.last_updated;
-        
-        // 位置情報表示時のエフェクト
-        const statusElement = document.getElementById("status");
-        statusElement.style.animation = "bounceIn 1s ease-out";
-      }, 500);
-    })
-    .catch(error => {
-      console.error("location.json の読み込みに失敗しました:", error);
-      document.getElementById("status").textContent = "情報取得失敗";
-      document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
-    });
-  
-  // リスタートボタンの処理
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    const newRestartBtn = restartBtn.cloneNode(true);
-    restartBtn.parentNode.replaceChild(newRestartBtn, restartBtn);
-    
-    newRestartBtn.addEventListener("click", () => {
-      locationCard.classList.remove('enhanced');
-      locationCard.style.display = "none";
-      initGame();
-    });
-  }
-}
-
-function showFinalLocationReveal() {
-  const finalReveal = document.createElement('div');
-  finalReveal.className = 'clue-discovery';
-  finalReveal.innerHTML = `
-    <div class="clue-popup" style="min-width: 320px;">
-      <h2 style="margin-top: 0; color: #ffff99;">🎯 捜査完了！</h2>
-      <p>すべての手がかりを発見しました！</p>
-      <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-        ${discoveredClues.map(clue => `<div style="margin: 5px 0; font-size: 14px;">✓ ${clue}</div>`).join('')}
-      </div>
-      <div style="font-size: 20px; font-weight: bold; color: #00ff00;">
-        🎉 こんちゃんを発見！ 🎉
-      </div>
-    </div>
-  `;
-  document.body.appendChild(finalReveal);
-  
-  setTimeout(() => {
-    if (finalReveal.parentNode) {
-      finalReveal.remove();
-    }
-  }, 6000);
-}
-
-// 当たり判定用のヘルパー関数
-function isColliding(a, b) {
-  return a.x < b.x + b.width &&
-         a.x + a.width > b.x &&
-         a.y < b.y + b.height &&
-         a.y + a.height > b.y;
-}
-
-// ★★★ シールド対応の衝突判定 ★★★
+// 衝突判定
 function checkCollisions() {
-  // 1) 被弾後の無敵時間のカウントダウン
-  if (playerInvincible) {
-    invincibleTimer--;
-    if (invincibleTimer <= 0) {
-      playerInvincible = false;
+  // プレイヤーと敵弾の衝突判定
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    let bullet = enemyBullets[i];
+    if (bullet.y + bullet.height > player.y && bullet.x + bullet.width > player.x && bullet.x < player.x + player.width) {
+      // 衝突したらゲームオーバー
+      endGame();
+      return;
     }
   }
 
-  // 2) プレイヤーの弾と敵の衝突判定
+  // プレイヤーと敵の衝突判定
+  enemies.forEach((enemy, index) => {
+    if (enemy.y + enemy.height > player.y && enemy.x + enemy.width > player.x && enemy.x < player.x + player.width) {
+      // 衝突したらゲームオーバー
+      endGame();
+      return;
+    }
+  });
+
+  // 弾と敵の衝突判定
   for (let i = bullets.length - 1; i >= 0; i--) {
-    const bullet = bullets[i];
+    let bullet = bullets[i];
     for (let j = enemies.length - 1; j >= 0; j--) {
-      const enemy = enemies[j];
-      if (isColliding(bullet, enemy)) {
-        enemy.hp -= bullet.power;
+      let enemy = enemies[j];
+      if (bullet.x + bullet.width > enemy.x && bullet.x < enemy.x + enemy.width && bullet.y < enemy.y + enemy.height) {
+        // 衝突したら弾と敵を消す
         bullets.splice(i, 1);
+        enemy.hp--;
         if (enemy.hp <= 0) {
-          score += enemy.score;
-          totalEnemiesDefeated++; // 撃破数をカウント
-          createExplosion(
-            enemy.x + enemy.width / 2,
-            enemy.y + enemy.height / 2,
-            enemy.type === "zigzag" ? enemy.currentColor : "#ffcc00"
-          );
+          // 敵のHPが0になったら敵を消す
           enemies.splice(j, 1);
-          if (score >= level * 20 && level < 5) {
-            level++;
-            startEnemyGeneration();
+          score += 10;
+          totalEnemiesDefeated++;
+          // パーティクルを生成
+          for (let k = 0; k < 10; k++) {
+            particles.push({
+              x: enemy.x + enemy.width / 2,
+              y: enemy.y + enemy.height / 2,
+              dx: (Math.random() - 0.5) * 4,
+              dy: (Math.random() - 0.5) * 4,
+              radius: Math.random() * 3 + 2,
+              color: "#ffcc00",
+              life: 20 + Math.random() * 10,
+              initialLife: 20 + Math.random() * 10
+            });
           }
         }
         break;
@@ -1018,101 +980,26 @@ function checkCollisions() {
     }
   }
 
-  // 3) シールド中の場合：敵や弾に当たっても残機が減らない
-  if (playerPowerupType === "shield") {
-    // (A) プレイヤーと敵の衝突
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      const enemy = enemies[i];
-      if (isColliding(player, enemy)) {
-        // シールドエフェクト（緑色の爆発）
-        createExplosion(
-          enemy.x + enemy.width / 2,
-          enemy.y + enemy.height / 2,
-          "#00ff00",
-          15
-        );
-        enemies.splice(i, 1);
+  // プレイヤーとパワーアップアイテムの衝突判定
+  powerups.forEach((powerup, index) => {
+    if (powerup.y + powerup.height > player.y && powerup.x + powerup.width > player.x && powerup.x < player.x + player.width) {
+      // 衝突したらパワーアップを適用
+      switch (powerup.type) {
+        case "rapidFire":
+          playerPowerupType = "rapidFire";
+          powerupTimer = 300;
+          break;
+        case "wideShot":
+          playerPowerupType = "wideShot";
+          powerupTimer = 300;
+          break;
+        case "shield":
+          playerInvincible = true;
+          invincibleTimer = 300;
+          break;
       }
+      // パワーアップを消す
+      powerups.splice(index, 1);
     }
-    // (B) プレイヤーと敵弾の衝突
-    for (let i = enemyBullets.length - 1; i >= 0; i--) {
-      const bullet = enemyBullets[i];
-      if (isColliding(player, bullet)) {
-        // 弾かれた際のエフェクト
-        createExplosion(
-          bullet.x + bullet.width / 2,
-          bullet.y + bullet.height / 2,
-          "#00ff00",
-          10
-        );
-        enemyBullets.splice(i, 1);
-      }
-    }
-  }
-  // 4) シールドで無敵ではなく、かつ playerInvincible でもない時は通常被弾
-  else if (!playerInvincible) {
-    // (A) プレイヤーと敵の衝突
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      const enemy = enemies[i];
-      if (isColliding(player, enemy)) {
-        lives--;
-        createExplosion(
-          player.x + player.width / 2,
-          player.y + player.height / 2,
-          "#ffffff",
-          20
-        );
-        playerInvincible = true;
-        invincibleTimer = 120;
-        enemies.splice(i, 1);
-        if (lives <= 0) {
-          gameOver = true;
-          endGame();
-          return;
-        }
-      }
-    }
-    // (B) プレイヤーと敵弾の衝突
-    for (let i = enemyBullets.length - 1; i >= 0; i--) {
-      const bullet = enemyBullets[i];
-      if (isColliding(player, bullet)) {
-        lives--;
-        createExplosion(
-          player.x + player.width / 2,
-          player.y + player.height / 2,
-          "#ff3333",
-          20
-        );
-        playerInvincible = true;
-        invincibleTimer = 120;
-        enemyBullets.splice(i, 1);
-        if (lives <= 0) {
-          gameOver = true;
-          endGame();
-          return;
-        }
-      }
-    }
-  }
-
-  // 5) パワーアップ取得判定
-  for (let i = powerups.length - 1; i >= 0; i--) {
-    const powerup = powerups[i];
-    if (isColliding(player, powerup)) {
-      playerPowerupType = powerup.type;
-      powerupTimer = 600; // 約10秒間シールドなどを有効化
-      let pu = powerupTypes.find(p => p.name === powerup.type);
-      if (pu) {
-        showPowerupNotification(pu.text);
-      }
-      powerups.splice(i, 1);
-    }
-  }
-}
-
-function togglePause() {
-  gamePaused = !gamePaused;
-  if (!gamePaused) {
-    gameLoop();
-  }
+  });
 }
