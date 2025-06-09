@@ -489,7 +489,11 @@ function updatePlayer() {
   player.x += player.dx;
   if (player.x < 0) player.x = 0;
   if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-  ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
+  
+  // 無敵時間中は点滅させる
+  if (!playerInvincible || Math.floor(invincibleTimer / 6) % 2 === 0) {
+    ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
+  }
   
   // シールド中の描画（緑色の円）
   if (playerPowerupType === "shield") {
@@ -887,23 +891,25 @@ function drawTrackingUI(ctx) {
 
 // ゲームオーバー時の処理
 function endGame() {
-  gameOver = true;
-  clearInterval(enemyInterval);
-  clearInterval(powerupInterval);
-  cancelAnimationFrame(gameLoopId);
+  gamePaused = true;
+  if (enemyInterval) clearInterval(enemyInterval);
+  if (powerupInterval) clearInterval(powerupInterval);
+  const overlay = document.getElementById("overlay");
   
-  // 最終スコアの表示
-  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-  ctx.fillRect(50, 50, canvas.width - 100, canvas.height - 100);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 24px Arial";
-  ctx.fillText("ゲームオーバー", canvas.width / 2 - 60, canvas.height / 2 - 20);
-  ctx.font = "18px Arial";
-  ctx.fillText(`最終スコア: ${score}`, canvas.width / 2 - 50, canvas.height / 2 + 10);
+  overlay.innerHTML = `
+    <div class="instructions">
+      <h2>GAME OVER</h2>
+      <p>残機がなくなりました。</p>
+      <button id="gameOverRestartBtn">リスタート</button>
+    </div>
+  `;
+  overlay.style.display = "flex";
   
-  document.getElementById("locationCard").style.display = "none";
-  document.getElementById("overlay").style.display = "block";
-  document.getElementById("restartBtn").style.display = "inline-block";
+  const gameOverRestartBtn = document.getElementById("gameOverRestartBtn");
+  gameOverRestartBtn.addEventListener("click", function() {
+    overlay.style.display = "none";
+    initGame();
+  });
 }
 
 // リスタートボタンの処理
@@ -928,24 +934,54 @@ function togglePause() {
 
 // 衝突判定
 function checkCollisions() {
-  // プレイヤーと敵弾の衝突判定
-  for (let i = enemyBullets.length - 1; i >= 0; i--) {
-    let bullet = enemyBullets[i];
-    if (bullet.y + bullet.height > player.y && bullet.x + bullet.width > player.x && bullet.x < player.x + player.width) {
-      // 衝突したらゲームオーバー
-      endGame();
-      return;
+  // 被弾後の無敵時間のカウントダウン
+  if (playerInvincible) {
+    invincibleTimer--;
+    if (invincibleTimer <= 0) {
+      playerInvincible = false;
     }
   }
 
-  // プレイヤーと敵の衝突判定
-  enemies.forEach((enemy, index) => {
-    if (enemy.y + enemy.height > player.y && enemy.x + enemy.width > player.x && enemy.x < player.x + player.width) {
-      // 衝突したらゲームオーバー
-      endGame();
-      return;
+  // シールド中でなく、かつ無敵時間でもない時のみ被弾判定
+  if (playerPowerupType !== "shield" && !playerInvincible) {
+    // プレイヤーと敵弾の衝突判定
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+      let bullet = enemyBullets[i];
+      if (bullet.y + bullet.height > player.y && bullet.x + bullet.width > player.x && bullet.x < player.x + player.width) {
+        // 残機を減らす
+        lives--;
+        playerInvincible = true;
+        invincibleTimer = 120; // 2秒間無敵
+        enemyBullets.splice(i, 1);
+        
+        if (lives <= 0) {
+          gameOver = true;
+          endGame();
+          return;
+        }
+        break;
+      }
     }
-  });
+
+    // プレイヤーと敵の衝突判定
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      let enemy = enemies[i];
+      if (enemy.y + enemy.height > player.y && enemy.x + enemy.width > player.x && enemy.x < player.x + player.width) {
+        // 残機を減らす
+        lives--;
+        playerInvincible = true;
+        invincibleTimer = 120; // 2秒間無敵
+        enemies.splice(i, 1);
+        
+        if (lives <= 0) {
+          gameOver = true;
+          endGame();
+          return;
+        }
+        break;
+      }
+    }
+  }
 
   // 弾と敵の衝突判定
   for (let i = bullets.length - 1; i >= 0; i--) {
