@@ -787,149 +787,12 @@ function createExplosion(x, y, color, count = 15) {
   }, 50);
 }
 
-// 追跡ミッションシステムの機能
-function updateTrackingMissions() {
-  trackingMissions.forEach(mission => {
-    if (mission.completed) return;
-    
-    // 進捗更新
-    switch(mission.type) {
-      case 'enemy_count':
-        mission.progress = totalEnemiesDefeated;
-        break;
-      case 'score':
-        mission.progress = score;
-        break;
-    }
-    
-    // ミッション達成チェック
-    if (mission.progress >= mission.target) {
-      mission.completed = true;
-      revealClue(mission);
-    }
-  });
-}
-
-function revealClue(mission) {
-  if (discoveredClues.includes(mission.reward)) return;
-  
-  discoveredClues.push(mission.reward);
-  investigationProgress += 33.33; // 3段階なので
-  
-  showClueDiscovery(mission);
-  
-  // 最終手がかりの場合は特別な処理は元のshowLocationCard()で行う
-}
-
-function showClueDiscovery(mission) {
-  const popup = document.createElement('div');
-  popup.className = 'clue-discovery';
-  popup.innerHTML = `
-    <div class="clue-popup">
-      🔍 手がかり発見！<br>
-      <span class="clue-title">${mission.name} 完了</span><br>
-      <span class="clue-text">${mission.reward}</span>
-    </div>
-  `;
-  document.body.appendChild(popup);
-  
-  setTimeout(() => {
-    if (popup.parentNode) {
-      popup.remove();
-    }
-  }, 4000);
-}
-
-function drawTrackingUI(ctx) {
-  // 捜査進度の背景
-  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-  ctx.fillRect(canvas.width - 220, 10, 210, 120);
-  
-  // 枠線
-  ctx.strokeStyle = "#4a5eff";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(canvas.width - 220, 10, 210, 120);
-  
-  // タイトル
-  ctx.fillStyle = "#4a5eff";
-  ctx.font = "bold 14px Arial";
-  ctx.fillText("🔍 こんちゃん捜索", canvas.width - 210, 30);
-  
-  // 進度バー
-  ctx.fillStyle = "#333";
-  ctx.fillRect(canvas.width - 210, 40, 190, 12);
-  ctx.fillStyle = "#4CAF50";
-  const progressWidth = Math.min((investigationProgress / 100) * 190, 190);
-  ctx.fillRect(canvas.width - 210, 40, progressWidth, 12);
-  
-  // 進度テキスト
-  ctx.fillStyle = "#fff";
-  ctx.font = "12px Arial";
-  ctx.fillText(`進度: ${Math.floor(investigationProgress)}%`, canvas.width - 210, 65);
-  
-  // 現在のミッション表示
-  ctx.fillStyle = "#ffff99";
-  ctx.font = "11px Arial";
-  let yOffset = 75;
-  
-  const activeMission = trackingMissions.find(m => !m.completed);
-  if (activeMission) {
-    ctx.fillText("現在の任務:", canvas.width - 210, yOffset);
-    yOffset += 15;
-    
-    const shortDesc = activeMission.description.length > 25 
-      ? activeMission.description.substring(0, 22) + "..." 
-      : activeMission.description;
-    ctx.fillText(shortDesc, canvas.width - 210, yOffset);
-    yOffset += 12;
-    
-    ctx.fillText(`進捗: ${activeMission.progress}/${activeMission.target}`, canvas.width - 210, yOffset);
-  } else {
-    ctx.fillText("全任務完了！", canvas.width - 210, yOffset);
-  }
-}
-
-// ゲームオーバー時の処理
-function endGame() {
-  gamePaused = true;
-  if (enemyInterval) clearInterval(enemyInterval);
-  if (powerupInterval) clearInterval(powerupInterval);
-  const overlay = document.getElementById("overlay");
-  
-  overlay.innerHTML = `
-    <div class="instructions">
-      <h2>GAME OVER</h2>
-      <p>残機がなくなりました。</p>
-      <button id="gameOverRestartBtn">リスタート</button>
-    </div>
-  `;
-  overlay.style.display = "flex";
-  
-  const gameOverRestartBtn = document.getElementById("gameOverRestartBtn");
-  gameOverRestartBtn.addEventListener("click", function() {
-    overlay.style.display = "none";
-    initGame();
-  });
-}
-
-// リスタートボタンの処理
-document.getElementById("restartBtn").addEventListener("click", () => {
-  document.getElementById("overlay").style.display = "none";
-  initGame();
-});
-
-// ポーズ・再開の処理
-function togglePause() {
-  gamePaused = !gamePaused;
-  if (gamePaused) {
-    clearInterval(enemyInterval);
-    clearInterval(powerupInterval);
-    cancelAnimationFrame(gameLoopId);
-  } else {
-    startEnemyGeneration();
-    powerupInterval = setInterval(spawnPowerup, 15000);
-    gameLoop();
-  }
+// 当たり判定用のヘルパー関数
+function isColliding(a, b) {
+  return a.x < b.x + b.width &&
+         a.x + a.width > b.x &&
+         a.y < b.y + b.height &&
+         a.y + a.height > b.y;
 }
 
 // 衝突判定
@@ -942,17 +805,52 @@ function checkCollisions() {
     }
   }
 
-  // シールド中でなく、かつ無敵時間でもない時のみ被弾判定
-  if (playerPowerupType !== "shield" && !playerInvincible) {
-    // プレイヤーと敵弾の衝突判定
+  // シールド中は敵弾を弾く
+  if (playerPowerupType === "shield") {
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
       let bullet = enemyBullets[i];
-      if (bullet.y + bullet.height > player.y && bullet.x + bullet.width > player.x && bullet.x < player.x + player.width) {
+      if (isColliding(player, bullet)) {
+        // 弾かれた際のエフェクト
+        for (let k = 0; k < 5; k++) {
+          particles.push({
+            x: bullet.x + bullet.width / 2,
+            y: bullet.y + bullet.height / 2,
+            dx: (Math.random() - 0.5) * 4,
+            dy: (Math.random() - 0.5) * 4,
+            radius: Math.random() * 2 + 1,
+            color: "#00ff00",
+            life: 10 + Math.random() * 10,
+            initialLife: 10 + Math.random() * 10
+          });
+        }
+        enemyBullets.splice(i, 1);
+      }
+    }
+  }
+  // シールド中でなく、かつ無敵時間でもない時のみ被弾判定
+  else if (!playerInvincible) {
+    // プレイヤーと敵の衝突判定
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      let enemy = enemies[i];
+      if (isColliding(player, enemy)) {
         // 残機を減らす
         lives--;
+        // エフェクト生成
+        for (let k = 0; k < 15; k++) {
+          particles.push({
+            x: player.x + player.width / 2,
+            y: player.y + player.height / 2,
+            dx: (Math.random() - 0.5) * 6,
+            dy: (Math.random() - 0.5) * 6,
+            radius: Math.random() * 3 + 2,
+            color: "#ffffff",
+            life: 20 + Math.random() * 10,
+            initialLife: 20 + Math.random() * 10
+          });
+        }
         playerInvincible = true;
         invincibleTimer = 120; // 2秒間無敵
-        enemyBullets.splice(i, 1);
+        enemies.splice(i, 1);
         
         if (lives <= 0) {
           gameOver = true;
@@ -962,16 +860,29 @@ function checkCollisions() {
         break;
       }
     }
-
-    // プレイヤーと敵の衝突判定
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      let enemy = enemies[i];
-      if (enemy.y + enemy.height > player.y && enemy.x + enemy.width > player.x && enemy.x < player.x + player.width) {
+    
+    // プレイヤーと敵弾の衝突判定
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+      let bullet = enemyBullets[i];
+      if (isColliding(player, bullet)) {
         // 残機を減らす
         lives--;
+        // エフェクト生成
+        for (let k = 0; k < 15; k++) {
+          particles.push({
+            x: player.x + player.width / 2,
+            y: player.y + player.height / 2,
+            dx: (Math.random() - 0.5) * 6,
+            dy: (Math.random() - 0.5) * 6,
+            radius: Math.random() * 3 + 2,
+            color: "#ff3333",
+            life: 20 + Math.random() * 10,
+            initialLife: 20 + Math.random() * 10
+          });
+        }
         playerInvincible = true;
         invincibleTimer = 120; // 2秒間無敵
-        enemies.splice(i, 1);
+        enemyBullets.splice(i, 1);
         
         if (lives <= 0) {
           gameOver = true;
@@ -988,7 +899,7 @@ function checkCollisions() {
     let bullet = bullets[i];
     for (let j = enemies.length - 1; j >= 0; j--) {
       let enemy = enemies[j];
-      if (bullet.x + bullet.width > enemy.x && bullet.x < enemy.x + enemy.width && bullet.y < enemy.y + enemy.height) {
+      if (isColliding(bullet, enemy)) {
         // 衝突したら弾と敵を消す
         bullets.splice(i, 1);
         enemy.hp--;
@@ -1018,7 +929,7 @@ function checkCollisions() {
 
   // プレイヤーとパワーアップアイテムの衝突判定
   powerups.forEach((powerup, index) => {
-    if (powerup.y + powerup.height > player.y && powerup.x + powerup.width > player.x && powerup.x < player.x + player.width) {
+    if (isColliding(player, powerup)) {
       // 衝突したらパワーアップを適用
       switch (powerup.type) {
         case "rapidFire":
