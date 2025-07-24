@@ -389,25 +389,35 @@ document.addEventListener("DOMContentLoaded", () => {
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★★★ ここから下に関数を追加 ★★★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-/* タッチ操作ハンドラ */
+/* タッチ操作ハンドラ（改善版） */
+let lastTouchX = null;
+let touchStartX = null;
+let isDragging = false;
+
 function handleTouchStart(e) {
   if (gameOver || gameClear || gamePaused || !player) return;
   e.preventDefault(); // スクロール等のデフォルト動作を防ぐ
 
   for (let i = 0; i < e.changedTouches.length; i++) {
     const touch = e.changedTouches[i];
-    const touchY = touch.clientY - canvas.getBoundingClientRect().top;
-    const touchX = touch.clientX - canvas.getBoundingClientRect().left;
+    const rect = canvas.getBoundingClientRect();
+    const touchY = touch.clientY - rect.top;
+    const touchX = touch.clientX - rect.left;
 
-    // 画面下部20%は移動
-    if (touchY > canvas.height * 0.8) {
+    // 画面下部30%は移動操作エリア
+    if (touchY > canvas.height * 0.7) {
       movementTouchId = touch.identifier;
+      touchStartX = touchX;
+      lastTouchX = touchX;
+      isDragging = true;
+      
+      // 初期方向設定
       if (touchX < canvas.width / 2) {
         player.dx = -player.speed;
       } else {
         player.dx = player.speed;
       }
-    } else { // それ以外は弾発射
+    } else { // それ以外は弾発射エリア
       shoot();
     }
   }
@@ -420,12 +430,24 @@ function handleTouchMove(e) {
   for (let i = 0; i < e.changedTouches.length; i++) {
     const touch = e.changedTouches[i];
     if (touch.identifier === movementTouchId) {
-      const touchX = touch.clientX - canvas.getBoundingClientRect().left;
-      if (touchX < canvas.width / 2) {
-        player.dx = -player.speed;
-      } else {
-        player.dx = player.speed;
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      
+      if (isDragging && lastTouchX !== null) {
+        // ドラッグの方向と速度を計算
+        const deltaX = touchX - lastTouchX;
+        const sensitivity = 0.8; // 感度調整
+        
+        if (Math.abs(deltaX) > 2) { // 最小移動閾値
+          if (deltaX > 0) {
+            player.dx = Math.min(player.speed * 1.5, player.speed + Math.abs(deltaX) * sensitivity);
+          } else {
+            player.dx = Math.max(-player.speed * 1.5, -player.speed - Math.abs(deltaX) * sensitivity);
+          }
+        }
       }
+      
+      lastTouchX = touchX;
       break;
     }
   }
@@ -440,6 +462,9 @@ function handleTouchEnd(e) {
     if (touch.identifier === movementTouchId) {
       player.dx = 0;
       movementTouchId = null;
+      lastTouchX = null;
+      touchStartX = null;
+      isDragging = false;
       break;
     }
   }
@@ -552,6 +577,69 @@ function drawHUD() {
   ctx.fillText(`レベル: ${level}`, 20, 70);
 }
 
+// タッチエリア表示（スマホ向け）
+function drawTouchAreas() {
+  // モバイル判定
+  const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+  if (!isMobile) return;
+  
+  // 射撃エリア（上部70%）
+  ctx.fillStyle = "rgba(255, 255, 0, 0.05)"; // 薄い黄色
+  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.7);
+  
+  // 移動エリア（下部30%）
+  ctx.fillStyle = "rgba(0, 255, 255, 0.08)"; // 薄いシアン
+  ctx.fillRect(0, canvas.height * 0.7, canvas.width, canvas.height * 0.3);
+  
+  // エリア境界線
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height * 0.7);
+  ctx.lineTo(canvas.width, canvas.height * 0.7);
+  ctx.stroke();
+  ctx.setLineDash([]); // 破線をリセット
+  
+  // タッチ中の視覚フィードバック
+  if (isDragging && lastTouchX !== null) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.beginPath();
+    ctx.arc(lastTouchX, canvas.height * 0.85, 25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 移動方向の矢印
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.font = "20px Arial";
+    if (player.dx > 0) {
+      ctx.fillText("→", lastTouchX - 10, canvas.height * 0.85 + 7);
+    } else if (player.dx < 0) {
+      ctx.fillText("←", lastTouchX - 10, canvas.height * 0.85 + 7);
+    }
+  }
+  
+  // 操作説明（最初の数秒間のみ表示）
+  if (typeof drawTouchAreas.startTime === 'undefined') {
+    drawTouchAreas.startTime = Date.now();
+  }
+  
+  const elapsed = Date.now() - drawTouchAreas.startTime;
+  if (elapsed < 5000) { // 5秒間表示
+    const alpha = Math.max(0, 1 - elapsed / 5000); // フェードアウト
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    
+    // 射撃エリアの説明
+    ctx.fillText("💥 タップで弾発射", canvas.width / 2, canvas.height * 0.35);
+    
+    // 移動エリアの説明
+    ctx.fillText("👆 ドラッグで左右移動", canvas.width / 2, canvas.height * 0.85);
+    
+    ctx.textAlign = "left"; // テキスト配置をリセット
+  }
+}
+
 // Simple tracking UI function
 function drawTrackingUI(ctx) {
   // Simple tracking info display
@@ -610,12 +698,13 @@ function gameLoop() {
   updateParticles();
   checkCollisions();
   drawHUD();
-  // Tracking UI display
-  try {
-    drawTrackingUI(ctx);
-  } catch (error) {
-    console.error("Error calling drawTrackingUI:", error);
-  }
+  drawTouchAreas(); // タッチエリア表示を追加
+  // Tracking UI display - 無効化
+  // try {
+  //   drawTrackingUI(ctx);
+  // } catch (error) {
+  //   console.error("Error calling drawTrackingUI:", error);
+  // }
   
   // 追跡ミッションの進捗チェック
   try {
@@ -1167,7 +1256,7 @@ function revealClue(mission) {
   discoveredClues.push(mission.reward);
   investigationProgress += 33.33; // 3段階なので
   
-  showClueDiscovery(mission);
+  // showClueDiscovery(mission); // ポップアップを無効化
 }
 
 function showClueDiscovery(mission) {
@@ -1271,122 +1360,85 @@ function showLocationCard() {
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
   
-  // 最終手がかり発見の演出
-  if (investigationProgress >= 100) {
-    showFinalLocationReveal();
-  }
-  
-  // 豪華な発見演出を開始
-  showDiscoveryCelebration();
+  // シンプルなクリアポップアップ
+  showSimpleGameClear();
 }
 
-// 豪華な「こんちゃん発見」演出
-function showDiscoveryCelebration() {
-  // 1. フルスクリーンお祝い画面を作成
-  const celebration = document.createElement('div');
-  celebration.className = 'discovery-celebration';
-  celebration.innerHTML = `
-    <div class="celebration-message">🎉 こんちゃん発見！ 🎉</div>
-    <div class="celebration-submessage">すべての手がかりを集めました！</div>
+// シンプルなゲームクリア表示（居場所情報付き）
+function showSimpleGameClear() {
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+    border: 3px solid #4CAF50;
+    max-width: 400px;
   `;
-  document.body.appendChild(celebration);
   
-  // 2. キラキラエフェクトを追加
-  createSparkleEffect(celebration);
+  popup.innerHTML = `
+    <h2 style="margin: 0 0 15px 0; color: #4CAF50;">🎉 ゲームクリア！ 🎉</h2>
+    <p style="margin: 0 0 20px 0; color: #fff;">スコア: ${score}点</p>
+    <div style="margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+      <h3 style="margin: 0 0 10px 0; color: #ffff99;">📍 こんちゃんイマココ</h3>
+      <p style="margin: 5px 0; color: #00ffff;"><strong>場所:</strong> <span id="locationStatus">読み込み中...</span></p>
+      <p style="margin: 5px 0; color: #00ffff;"><strong>更新:</strong> <span id="locationTime">読み込み中...</span></p>
+    </div>
+    <button onclick="location.reload()" style="
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    ">もう一度プレイ</button>
+  `;
   
-  // 3. 3秒後に位置情報カードを表示
-  setTimeout(() => {
-    celebration.remove();
-    showEnhancedLocationCard();
-  }, 3000);
-}
-
-// キラキラエフェクト
-function createSparkleEffect(container) {
-  const sparkleSymbols = ['✨', '⭐', '💫', '🌟', '✴️'];
+  document.body.appendChild(popup);
   
-  for (let i = 0; i < 20; i++) {
-    setTimeout(() => {
-      const sparkle = document.createElement('div');
-      sparkle.className = 'sparkle';
-      sparkle.textContent = sparkleSymbols[Math.floor(Math.random() * sparkleSymbols.length)];
-      sparkle.style.left = Math.random() * 100 + '%';
-      sparkle.style.top = Math.random() * 100 + '%';
-      sparkle.style.animationDelay = Math.random() * 2 + 's';
-      container.appendChild(sparkle);
-      
-      // 3秒後に削除
-      setTimeout(() => {
-        if (sparkle.parentNode) {
-          sparkle.remove();
-        }
-      }, 3000);
-    }, i * 100);
-  }
-}
-
-// 拡張されたロケーションカード表示
-function showEnhancedLocationCard() {
-  const locationCard = document.getElementById("locationCard");
-  locationCard.classList.add('enhanced');
-  locationCard.style.display = "flex";
-  
-  // 位置情報を取得して表示
+  // 居場所情報を取得して表示
   fetch("location.json")
     .then(response => response.json())
     .then(data => {
-      // アニメーション付きで位置情報を表示
-      setTimeout(() => {
-        document.getElementById("status").textContent = data.status.trim();
-        document.getElementById("lastUpdated").textContent = data.last_updated;
-        
-        // 位置情報表示時のエフェクト
-        const statusElement = document.getElementById("status");
-        statusElement.style.animation = "bounceIn 1s ease-out";
-      }, 500);
+      document.getElementById("locationStatus").textContent = data.status.trim();
+      document.getElementById("locationTime").textContent = data.last_updated;
     })
     .catch(error => {
       console.error("location.json の読み込みに失敗しました:", error);
-      document.getElementById("status").textContent = "情報取得失敗";
-      document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
+      document.getElementById("locationStatus").textContent = "情報取得失敗";
+      document.getElementById("locationTime").textContent = new Date().toLocaleString();
     });
-  
-  // リスタートボタンの処理
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    const newRestartBtn = restartBtn.cloneNode(true);
-    restartBtn.parentNode.replaceChild(newRestartBtn, restartBtn);
-    
-    newRestartBtn.addEventListener("click", () => {
-      locationCard.classList.remove('enhanced');
-      locationCard.style.display = "none";
-      initGame();
-    });
-  }
 }
 
-function showFinalLocationReveal() {
-  const finalReveal = document.createElement('div');
-  finalReveal.className = 'clue-discovery';
-  finalReveal.innerHTML = `
-    <div class="clue-popup" style="min-width: 320px;">
-      <h2 style="margin-top: 0; color: #ffff99;">🎯 捜査完了！</h2>
-      <p>すべての手がかりを発見しました！</p>
-      <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-        ${discoveredClues.map(clue => `<div style="margin: 5px 0; font-size: 14px;">✓ ${clue}</div>`).join('')}
-      </div>
-      <div style="font-size: 20px; font-weight: bold; color: #00ff00;">
-        🎉 こんちゃんを発見！ 🎉
-      </div>
-    </div>
-  `;
-  document.body.appendChild(finalReveal);
+// パワーアップ通知表示
+function showPowerupNotification(text) {
+  const notification = document.getElementById("powerupNotification");
+  notification.textContent = text;
+  notification.style.display = "block";
   
   setTimeout(() => {
-    if (finalReveal.parentNode) {
-      finalReveal.remove();
-    }
-  }, 6000);
+    notification.style.display = "none";
+  }, 3000);
+}
+
+function togglePause() {
+  gamePaused = !gamePaused;
+  if (gamePaused) {
+    if (enemyInterval) clearInterval(enemyInterval);
+    if (powerupInterval) clearInterval(powerupInterval);
+  } else {
+    startEnemyGeneration();
+    powerupInterval = setInterval(spawnPowerup, 15000);
+    gameLoop();
+  }
 }
 
 // パワーアップ通知表示
@@ -1413,4 +1465,4 @@ function togglePause() {
   if (!gamePaused) {
     gameLoop();
   }
-}// Force update #午後
+}
