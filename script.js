@@ -411,12 +411,10 @@ function handleTouchStart(e) {
       lastTouchX = touchX;
       isDragging = true;
       
-      // 初期方向設定（速度を抑制）
-      if (touchX < canvas.width / 2) {
-        player.dx = -player.speed * 0.8; // 初期速度を80%に
-      } else {
-        player.dx = player.speed * 0.8; // 初期速度を80%に
-      }
+      // 指の位置にプレイヤーを直接移動（画面端からの制約あり）
+      const targetX = Math.max(0, Math.min(touchX - player.width / 2, canvas.width - player.width));
+      player.x = targetX;
+      player.dx = 0; // 直接位置制御なので速度はリセット
     } else { // それ以外は弾発射エリア
       shoot();
     }
@@ -433,18 +431,12 @@ function handleTouchMove(e) {
       const rect = canvas.getBoundingClientRect();
       const touchX = touch.clientX - rect.left;
       
-      if (isDragging && lastTouchX !== null) {
-        // ドラッグの方向と速度を計算
-        const deltaX = touchX - lastTouchX;
-        const sensitivity = 0.4; // 感度を下げる（0.8→0.4）
-        
-        if (Math.abs(deltaX) > 3) { // 最小移動閾値を上げる（2→3）
-          if (deltaX > 0) {
-            player.dx = Math.min(player.speed * 1.2, player.speed + Math.abs(deltaX) * sensitivity);
-          } else {
-            player.dx = Math.max(-player.speed * 1.2, -player.speed - Math.abs(deltaX) * sensitivity);
-          }
-        }
+      if (isDragging) {
+        // 指の位置にプレイヤーを直接追従（スムーズな補間付き）
+        const targetX = Math.max(0, Math.min(touchX - player.width / 2, canvas.width - player.width));
+        const smoothness = 0.3; // 追従の滑らかさ（0.1-1.0, 大きいほど敏感）
+        player.x += (targetX - player.x) * smoothness;
+        player.dx = 0; // 直接位置制御なので速度はリセット
       }
       
       lastTouchX = touchX;
@@ -460,7 +452,7 @@ function handleTouchEnd(e) {
   for (let i = 0; i < e.changedTouches.length; i++) {
     const touch = e.changedTouches[i];
     if (touch.identifier === movementTouchId) {
-      player.dx = 0;
+      player.dx = 0; // 速度をリセット
       movementTouchId = null;
       lastTouchX = null;
       touchStartX = null;
@@ -608,14 +600,22 @@ function drawTouchAreas() {
     ctx.arc(lastTouchX, canvas.height * 0.925, 25, 0, Math.PI * 2);
     ctx.fill();
     
-    // 移動方向の矢印
+    // プレイヤーとの接続線を表示
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(lastTouchX, canvas.height * 0.925);
+    ctx.lineTo(player.x + player.width / 2, player.y + player.height / 2);
+    ctx.stroke();
+    ctx.setLineDash([]); // 破線をリセット
+    
+    // 指の位置に小さなアイコン
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.font = "20px Arial";
-    if (player.dx > 0) {
-      ctx.fillText("→", lastTouchX - 10, canvas.height * 0.925 + 7);
-    } else if (player.dx < 0) {
-      ctx.fillText("←", lastTouchX - 10, canvas.height * 0.925 + 7);
-    }
+    ctx.font = "16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("👆", lastTouchX, canvas.height * 0.925 + 5);
+    ctx.textAlign = "left"; // リセット
   }
   
   // 操作説明（最初の数秒間のみ表示）
@@ -634,7 +634,7 @@ function drawTouchAreas() {
     ctx.fillText("💥 タップで弾発射", canvas.width / 2, canvas.height * 0.42);
     
     // 移動エリアの説明
-    ctx.fillText("👆 ドラッグで左右移動", canvas.width / 2, canvas.height * 0.925);
+    ctx.fillText("👆 指に追従して移動", canvas.width / 2, canvas.height * 0.925);
     
     ctx.textAlign = "left"; // テキスト配置をリセット
   }
