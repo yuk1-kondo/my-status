@@ -13,12 +13,42 @@ let invincibleTimer = 0;
 let playerPowerupType = null;
 let powerupTimer = 0;
 let movementTouchId = null;
+let starfield = []; // 星のパーティクル
 const zigzagColors = ["#ff3366", "#33ccff", "#ff9900", "#66ff33", "#9933ff"];
 const powerupTypes = [
   { name: "rapidFire", color: "#ffff00", text: "連射モード！" },
   { name: "wideShot", color: "#00ffff", text: "ワイドショット！" },
   { name: "shield", color: "#00ff00", text: "シールド！" }
 ];
+
+// 星のパーティクル初期化
+function initStarfield() {
+  for (let i = 0; i < 100; i++) {
+    starfield.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      speed: Math.random() * 2 + 0.5,
+      size: Math.random() * 2 + 1,
+      brightness: Math.random()
+    });
+  }
+}
+
+// 星のパーティクルを描画
+function drawStarfield() {
+  starfield.forEach(star => {
+    star.y += star.speed;
+    if (star.y > canvas.height) {
+      star.y = 0;
+      star.x = Math.random() * canvas.width;
+    }
+    
+    ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
 
 // 追跡ミッションシステム
 const trackingMissions = [
@@ -72,19 +102,19 @@ let enemyBullets = [];
 
 // スプライト画像の生成
 function loadGameAssets() {
-  // プレイヤー用スプライト
+  // プレイヤー用スプライト（パープル＆ピンクの宇宙船風）
   sprites.player = document.createElement('canvas');
   sprites.player.width = 30;
   sprites.player.height = 40;
   let pCtx = sprites.player.getContext('2d');
-  pCtx.fillStyle = "#4a5eff";
+  pCtx.fillStyle = "#8B00FF"; // バイオレット
   pCtx.beginPath();
   pCtx.moveTo(15, 0);
   pCtx.lineTo(0, 25);
   pCtx.lineTo(30, 25);
   pCtx.closePath();
   pCtx.fill();
-  pCtx.fillStyle = "#2233cc";
+  pCtx.fillStyle = "#FF1493"; // ディープピンク
   pCtx.beginPath();
   pCtx.moveTo(0, 25);
   pCtx.lineTo(5, 15);
@@ -93,28 +123,28 @@ function loadGameAssets() {
   pCtx.lineTo(30, 25);
   pCtx.closePath();
   pCtx.fill();
-  pCtx.fillStyle = "#8ab3ff";
+  pCtx.fillStyle = "#FFB6C1"; // ライトピンク
   pCtx.beginPath();
   pCtx.moveTo(15, 5);
   pCtx.lineTo(10, 18);
   pCtx.lineTo(20, 18);
   pCtx.closePath();
   pCtx.fill();
-  pCtx.fillStyle = "#ff5500";
+  pCtx.fillStyle = "#FF69B4"; // ホットピンク
   pCtx.beginPath();
   pCtx.moveTo(10, 25);
   pCtx.lineTo(15, 35);
   pCtx.lineTo(20, 25);
   pCtx.closePath();
   pCtx.fill();
-  pCtx.fillStyle = "#ffcc00";
+  pCtx.fillStyle = "#FF1493"; // エンジン
   pCtx.beginPath();
   pCtx.moveTo(12, 25);
   pCtx.lineTo(15, 32);
   pCtx.lineTo(18, 25);
   pCtx.closePath();
   pCtx.fill();
-  pCtx.fillStyle = "#ffffff";
+  pCtx.fillStyle = "#00FFFF"; // シアン色の目
   pCtx.beginPath();
   pCtx.arc(5, 20, 1, 0, Math.PI * 2);
   pCtx.fill();
@@ -122,12 +152,12 @@ function loadGameAssets() {
   pCtx.arc(25, 20, 1, 0, Math.PI * 2);
   pCtx.fill();
 
-  // グレー敵のスプライト
+  // グレー敵のスプライト（ターコイズ色のロボット）
   sprites.enemies.gray = document.createElement('canvas');
   sprites.enemies.gray.width = 20;
   sprites.enemies.gray.height = 20;
   let grayCtx = sprites.enemies.gray.getContext('2d');
-  grayCtx.fillStyle = "#aaaaaa";
+  grayCtx.fillStyle = "#40E0D0"; // ターコイズ
   grayCtx.beginPath();
   grayCtx.moveTo(10, 0);
   grayCtx.lineTo(0, 10);
@@ -136,7 +166,7 @@ function loadGameAssets() {
   grayCtx.lineTo(20, 10);
   grayCtx.closePath();
   grayCtx.fill();
-  grayCtx.fillStyle = "#888888";
+  grayCtx.fillStyle = "#008B8B"; // ダークターコイズ
   grayCtx.beginPath();
   grayCtx.moveTo(0, 10);
   grayCtx.lineTo(3, 18);
@@ -144,53 +174,98 @@ function loadGameAssets() {
   grayCtx.lineTo(20, 10);
   grayCtx.closePath();
   grayCtx.fill();
-  grayCtx.fillStyle = "#666666";
+  grayCtx.fillStyle = "#006666"; // 深いターコイズ
   grayCtx.fillRect(8, 5, 4, 8);
-  grayCtx.fillStyle = "#cccccc";
+  grayCtx.fillStyle = "#87CEEB"; // スカイブルー
   grayCtx.beginPath();
   grayCtx.arc(10, 7, 2, 0, Math.PI * 2);
   grayCtx.fill();
 
-  // オレンジ敵のスプライト
+  // オレンジ敵のスプライト（ライム＆イエローの UFO）
   sprites.enemies.orange = document.createElement('canvas');
   sprites.enemies.orange.width = 20;
   sprites.enemies.orange.height = 20;
   let orangeCtx = sprites.enemies.orange.getContext('2d');
-  orangeCtx.fillStyle = "#ffa500";
+  orangeCtx.fillStyle = "#32CD32"; // ライムグリーン
   orangeCtx.beginPath();
   orangeCtx.ellipse(10, 10, 10, 6, 0, 0, Math.PI * 2);
   orangeCtx.fill();
-  orangeCtx.fillStyle = "#ffcc00";
+  orangeCtx.fillStyle = "#FFFF00"; // イエロー
   orangeCtx.beginPath();
   orangeCtx.ellipse(10, 7, 5, 5, 0, 0, Math.PI * 2);
   orangeCtx.fill();
-  orangeCtx.fillStyle = "#ff5500";
+  orangeCtx.fillStyle = "#FF4500"; // オレンジレッド
   for (let i = 0; i < 5; i++) {
     const angle = i * Math.PI / 2.5;
     orangeCtx.beginPath();
     orangeCtx.arc(10 + 8 * Math.cos(angle), 10 + 3 * Math.sin(angle), 1.5, 0, Math.PI * 2);
     orangeCtx.fill();
   }
-  orangeCtx.fillStyle = "#ffffff";
+  orangeCtx.fillStyle = "#FF69B4"; // ホットピンク
   orangeCtx.fillRect(9.5, 0, 1, 4);
   orangeCtx.beginPath();
   orangeCtx.arc(10, 0, 1, 0, Math.PI * 2);
   orangeCtx.fill();
 
-  // 弾のスプライト
+  // 新しい敵：ボス敵（大型の赤いドラゴン）
+  sprites.enemies.boss = document.createElement('canvas');
+  sprites.enemies.boss.width = 40;
+  sprites.enemies.boss.height = 30;
+  let bossCtx = sprites.enemies.boss.getContext('2d');
+  bossCtx.fillStyle = "#DC143C"; // クリムゾン
+  bossCtx.beginPath();
+  bossCtx.ellipse(20, 15, 20, 12, 0, 0, Math.PI * 2);
+  bossCtx.fill();
+  bossCtx.fillStyle = "#B22222"; // ファイアブリック
+  bossCtx.beginPath();
+  bossCtx.ellipse(15, 10, 8, 6, 0, 0, Math.PI * 2);
+  bossCtx.fill();
+  bossCtx.fillStyle = "#8B0000"; // ダークレッド
+  bossCtx.fillRect(10, 5, 20, 4);
+  bossCtx.fillStyle = "#FFD700"; // ゴールド（目）
+  bossCtx.beginPath();
+  bossCtx.arc(12, 8, 2, 0, Math.PI * 2);
+  bossCtx.fill();
+  bossCtx.beginPath();
+  bossCtx.arc(28, 8, 2, 0, Math.PI * 2);
+  bossCtx.fill();
+
+  // 新しい敵：高速敵（小さな青いスピードスター）
+  sprites.enemies.fast = document.createElement('canvas');
+  sprites.enemies.fast.width = 15;
+  sprites.enemies.fast.height = 15;
+  let fastCtx = sprites.enemies.fast.getContext('2d');
+  fastCtx.fillStyle = "#1E90FF"; // ドッジャーブルー
+  fastCtx.beginPath();
+  for (let i = 0; i < 4; i++) {
+    const angle = (i * Math.PI / 2);
+    const x = 7.5 + 7 * Math.cos(angle);
+    const y = 7.5 + 7 * Math.sin(angle);
+    if (i === 0) fastCtx.moveTo(x, y);
+    else fastCtx.lineTo(x, y);
+  }
+  fastCtx.closePath();
+  fastCtx.fill();
+  fastCtx.fillStyle = "#00BFFF"; // ディープスカイブルー
+  fastCtx.beginPath();
+  fastCtx.arc(7.5, 7.5, 3, 0, Math.PI * 2);
+  fastCtx.fill();
+
+  // 弾のスプライト（レインボーグラデーション）
   sprites.bullets = document.createElement('canvas');
   sprites.bullets.width = 5;
   sprites.bullets.height = 10;
   let bulletCtx = sprites.bullets.getContext('2d');
   const bulletGradient = bulletCtx.createLinearGradient(0, 0, 0, 10);
-  bulletGradient.addColorStop(0, "#ffffff");
-  bulletGradient.addColorStop(0.5, "#ffff00");
-  bulletGradient.addColorStop(1, "#ff9900");
+  bulletGradient.addColorStop(0, "#FF00FF"); // マゼンタ
+  bulletGradient.addColorStop(0.33, "#00FFFF"); // シアン
+  bulletGradient.addColorStop(0.66, "#FFFF00"); // イエロー
+  bulletGradient.addColorStop(1, "#FF69B4"); // ホットピンク
   bulletCtx.fillStyle = bulletGradient;
   bulletCtx.beginPath();
   bulletCtx.ellipse(2.5, 5, 2.5, 5, 0, 0, Math.PI * 2);
   bulletCtx.fill();
-  bulletCtx.fillStyle = "rgba(255, 255, 255, 0.6)";
+  bulletCtx.fillStyle = "rgba(255, 255, 255, 0.8)";
   bulletCtx.beginPath();
   bulletCtx.arc(2.5, 3, 1, 0, Math.PI * 2);
   bulletCtx.fill();
@@ -407,6 +482,8 @@ function initGame() {
   if (gameLoopId) cancelAnimationFrame(gameLoopId);
 
   setCanvasSize();
+  initStarfield(); // 星のパーティクル初期化
+  
   player = {
     x: canvas.width / 2 - 15,
     y: canvas.height - 40,
@@ -472,32 +549,47 @@ function drawHUD() {
 // Simple tracking UI function
 function drawTrackingUI(ctx) {
   // Simple tracking info display
-  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillStyle = "rgba(138, 43, 226, 0.8)"; // バイオレット背景
   ctx.fillRect(canvas.width - 200, 10, 190, 80);
   
-  ctx.strokeStyle = "#4a5eff";
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#FF69B4"; // ホットピンクの枠
+  ctx.lineWidth = 2;
   ctx.strokeRect(canvas.width - 200, 10, 190, 80);
   
-  ctx.fillStyle = "#4a5eff";
-  ctx.font = "12px Arial";
-  ctx.fillText("こんちゃん捜索", canvas.width - 190, 30);
+  ctx.fillStyle = "#FFB6C1"; // ライトピンクのタイトル
+  ctx.font = "bold 14px Arial";
+  ctx.fillText("🔍 こんちゃん捜索", canvas.width - 190, 30);
   
-  ctx.fillStyle = "#fff";
-  ctx.font = "10px Arial";
+  ctx.fillStyle = "#00FFFF"; // シアンの進度テキスト
+  ctx.font = "12px Arial";
   ctx.fillText(`進度: ${Math.floor(investigationProgress || 0)}%`, canvas.width - 190, 50);
   
-  // Simple progress bar
-  ctx.fillStyle = "#333";
+  // レインボープログレスバー
+  ctx.fillStyle = "#1a0033"; // ダーク背景
   ctx.fillRect(canvas.width - 190, 55, 170, 8);
-  ctx.fillStyle = "#4CAF50";
+  
   const progress = (investigationProgress || 0) / 100;
+  const gradient = ctx.createLinearGradient(canvas.width - 190, 0, canvas.width - 20, 0);
+  gradient.addColorStop(0, "#FF00FF"); // マゼンタ
+  gradient.addColorStop(0.5, "#00FFFF"); // シアン
+  gradient.addColorStop(1, "#FFFF00"); // イエロー
+  ctx.fillStyle = gradient;
   ctx.fillRect(canvas.width - 190, 55, 170 * progress, 8);
 }
 
 function gameLoop() {
   if (gamePaused || gameOver || gameClear) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // ダークパープルの背景グラデーション
+  const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bgGradient.addColorStop(0, "#1a0033"); // ダークパープル
+  bgGradient.addColorStop(0.5, "#330066"); // ミディアムパープル
+  bgGradient.addColorStop(1, "#0a001a"); // 非常にダークパープル
+  ctx.fillStyle = bgGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // 星のパーティクル背景
+  drawStarfield();
   
   if (!player) {
     console.error("Player is not initialized!");
@@ -658,27 +750,43 @@ function startEnemyGeneration() {
   enemyInterval = setInterval(() => {
     if (gamePaused || gameOver || gameClear) return;
     const rand = Math.random();
-    if (rand < 0.4) {
-      spawnEnemy("gray");   // 40%の確率でグレー
+    if (rand < 0.25) {
+      spawnEnemy("gray");   // 25%の確率でグレー
+    } else if (rand < 0.45) {
+      spawnEnemy("orange"); // 20%でオレンジ
     } else if (rand < 0.7) {
-      spawnEnemy("orange"); // 30%でオレンジ
+      spawnEnemy("zigzag"); // 25%でジグザグ
+    } else if (rand < 0.9) {
+      spawnEnemy("fast");   // 20%で高速敵
     } else {
-      spawnEnemy("zigzag"); // 30%でジグザグ
+      spawnEnemy("boss");   // 10%でボス敵
     }
   }, interval);
 }
 
 function spawnEnemy(type) {
-  const width = 20;
+  let width, height;
+  
+  if (type === "boss") {
+    width = 40;
+    height = 30;
+  } else if (type === "fast") {
+    width = 15;
+    height = 15;
+  } else {
+    width = 20;
+    height = 20;
+  }
+  
   const x = Math.random() * (canvas.width - width);
   
   let enemy = {
     x: x,
-    y: -20,
+    y: -height,
     width: width,
-    height: 20,
+    height: height,
     type: type,
-    hp: type === "zigzag" ? 3 : 1,
+    hp: 1,
     frameCount: 0
   };
   
@@ -695,6 +803,7 @@ function spawnEnemy(type) {
       enemy.shootInterval = 100 + Math.floor(Math.random() * 50);
     }
   } else if (type === "zigzag") {
+    enemy.hp = 3;
     enemy.speed = 2.5 + Math.random() * 1.5;
     enemy.amplitude = 30 + Math.random() * 20;
     enemy.frequency = 0.05 + Math.random() * 0.03;
@@ -702,6 +811,21 @@ function spawnEnemy(type) {
     enemy.score = -10;
     enemy.currentColor = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
     enemy.colorChangeRate = 10 + Math.floor(Math.random() * 20);
+  } else if (type === "boss") {
+    enemy.hp = 10; // ボスは体力が多い
+    enemy.speed = 0.8;
+    enemy.score = 50;
+    enemy.canShoot = true;
+    enemy.shootInterval = 60; // 頻繁に弾を撃つ
+    enemy.amplitude = 50;
+    enemy.frequency = 0.02;
+    enemy.startX = x;
+  } else if (type === "fast") {
+    enemy.hp = 1;
+    enemy.speed = 4 + Math.random() * 2; // 非常に高速
+    enemy.score = 20;
+    enemy.zigzagSpeed = 3;
+    enemy.startX = x;
   }
   
   enemies.push(enemy);
@@ -723,6 +847,19 @@ function updateEnemies() {
       if (enemy.frameCount % enemy.colorChangeRate === 0) {
         enemy.currentColor = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
       }
+    } else if (enemy.type === "boss") {
+      enemy.y += enemy.speed;
+      enemy.x = enemy.startX + Math.sin(enemy.y * enemy.frequency) * enemy.amplitude;
+      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
+        spawnEnemyBullet(enemy);
+        // ボスは3方向に弾を撃つ
+        spawnEnemyBullet({...enemy, x: enemy.x - 10});
+        spawnEnemyBullet({...enemy, x: enemy.x + 10});
+      }
+    } else if (enemy.type === "fast") {
+      enemy.y += enemy.speed;
+      // 高速敵は左右にジグザグ移動
+      enemy.x = enemy.startX + Math.sin(enemy.y * 0.1) * 40;
     }
     
     if (enemy.y > canvas.height) {
