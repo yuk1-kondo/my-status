@@ -750,16 +750,16 @@ function startEnemyGeneration() {
   enemyInterval = setInterval(() => {
     if (gamePaused || gameOver || gameClear) return;
     const rand = Math.random();
-    if (rand < 0.25) {
-      spawnEnemy("gray");   // 25%の確率でグレー
-    } else if (rand < 0.45) {
-      spawnEnemy("orange"); // 20%でオレンジ
-    } else if (rand < 0.7) {
-      spawnEnemy("zigzag"); // 25%でジグザグ
-    } else if (rand < 0.9) {
+    if (rand < 0.2) {
+      spawnEnemy("gray");   // 20%の確率でグレー
+    } else if (rand < 0.35) {
+      spawnEnemy("orange"); // 15%でオレンジ
+    } else if (rand < 0.55) {
+      spawnEnemy("zigzag"); // 20%でジグザグ
+    } else if (rand < 0.75) {
       spawnEnemy("fast");   // 20%で高速敵
     } else {
-      spawnEnemy("boss");   // 10%でボス敵
+      spawnEnemy("boss");   // 25%でボス敵（テスト用に高めに設定）
     }
   }, interval);
 }
@@ -838,7 +838,8 @@ function updateEnemies() {
     
     if (enemy.type === "gray" || enemy.type === "orange") {
       enemy.y += enemy.speed;
-      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
+      // プレイヤーを超えていない場合のみ攻撃
+      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0 && enemy.y < player.y) {
         spawnEnemyBullet(enemy);
       }
     } else if (enemy.type === "zigzag") {
@@ -850,7 +851,8 @@ function updateEnemies() {
     } else if (enemy.type === "boss") {
       enemy.y += enemy.speed;
       enemy.x = enemy.startX + Math.sin(enemy.y * enemy.frequency) * enemy.amplitude;
-      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
+      // プレイヤーを超えていない場合のみ攻撃
+      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0 && enemy.y < player.y) {
         spawnEnemyBullet(enemy);
         // ボスは3方向に弾を撃つ
         spawnEnemyBullet({...enemy, x: enemy.x - 10});
@@ -868,7 +870,7 @@ function updateEnemies() {
     }
     
     // 敵の描画
-    if (enemy.type === "gray" || enemy.type === "orange") {
+    if (enemy.type === "gray" || enemy.type === "orange" || enemy.type === "boss" || enemy.type === "fast") {
       ctx.drawImage(sprites.enemies[enemy.type], enemy.x, enemy.y, enemy.width, enemy.height);
     } else if (enemy.type === "zigzag") {
       ctx.fillStyle = enemy.currentColor;
