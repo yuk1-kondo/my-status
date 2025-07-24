@@ -14,6 +14,8 @@ let playerPowerupType = null;
 let powerupTimer = 0;
 let movementTouchId = null;
 let starfield = []; // 星のパーティクル
+let bossSpawned = false; // ボスが既に出現したかどうか
+let bossHitCount = 0; // ボスへのヒット数を記録
 const zigzagColors = ["#ff3366", "#33ccff", "#ff9900", "#66ff33", "#9933ff"];
 const powerupTypes = [
   { name: "rapidFire", color: "#ffff00", text: "連射モード！" },
@@ -510,6 +512,10 @@ function initGame() {
   playerPowerupType = null;
   powerupTimer = 0;
   
+  // ボス関連をリセット
+  bossSpawned = false;
+  bossHitCount = 0;
+  
   // 追跡ミッションシステムをリセット
   totalEnemiesDefeated = 0;
   discoveredClues = [];
@@ -763,8 +769,11 @@ function startEnemyGeneration() {
       spawnEnemy("zigzag"); // 20%でジグザグ
     } else if (rand < 0.75) {
       spawnEnemy("fast");   // 20%で高速敵
+    } else if (!bossSpawned) {
+      spawnEnemy("boss");   // ボス敵（1回のみ）
+      bossSpawned = true;   // ボス出現フラグを立てる
     } else {
-      spawnEnemy("boss");   // 25%でボス敵（テスト用に高めに設定）
+      spawnEnemy("gray");   // ボス出現済みの場合はグレー敵
     }
   }, interval);
 }
@@ -817,15 +826,16 @@ function spawnEnemy(type) {
     enemy.currentColor = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
     enemy.colorChangeRate = 10 + Math.floor(Math.random() * 20);
   } else if (type === "boss") {
-    enemy.hp = 10; // ボスは体力が多い
+    enemy.hp = 5; // 5発で倒せるように変更
     enemy.speed = 1.5; // 横移動速度
     enemy.score = 50;
     enemy.canShoot = true;
-    enemy.shootInterval = 180; // 攻撃頻度を下げる（60→180）
+    enemy.shootInterval = 180; // 攻撃頻度を下げる
     enemy.direction = Math.random() < 0.5 ? -1 : 1; // 左右どちらから出現するか
     enemy.x = enemy.direction === 1 ? -width : canvas.width; // 画面外から開始
     enemy.y = Math.random() * (canvas.height * 0.3) + 50; // 上部1/3の範囲
-    enemy.isInvincible = true; // 倒せないパターン
+    enemy.isInvincible = false; // 倒せるように変更
+    enemy.hitCount = 0; // ヒット数をカウント
     enemy.frequency = 0.02;
     enemy.startX = x;
   } else if (type === "fast") {
@@ -863,14 +873,15 @@ function updateEnemies() {
       // 攻撃頻度を抑制
       if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
         spawnEnemyBullet(enemy);
-        // ボスは2方向に弾を撃つ（3→2に減少）
+        // ボスは2方向に弾を撃つ
         spawnEnemyBullet({...enemy, x: enemy.x + 10});
       }
       
-      // 画面外に出たら削除
+      // 画面外に出たら反対側から再出現
       if (enemy.x < -enemy.width || enemy.x > canvas.width) {
-        enemies.splice(i, 1);
-        continue;
+        enemy.direction *= -1; // 方向を反転
+        enemy.x = enemy.direction === 1 ? -enemy.width : canvas.width;
+        enemy.y = Math.random() * (canvas.height * 0.3) + 50; // 新しいY座標
       }
     } else if (enemy.type === "fast") {
       enemy.y += enemy.speed;
@@ -1070,15 +1081,27 @@ function checkCollisions() {
     for (let j = enemies.length - 1; j >= 0; j--) {
       let enemy = enemies[j];
       if (isColliding(bullet, enemy)) {
-        // ボスは倒せないパターン（弾は消えるが、ボスはダメージを受けない）
-        if (enemy.type === "boss" && enemy.isInvincible) {
+        // ボスの場合の特別処理
+        if (enemy.type === "boss") {
           bullets.splice(i, 1);
-          // エフェクトのみ表示
+          bossHitCount++; // グローバルなヒット数をカウント
+          enemy.hitCount = bossHitCount; // 敵オブジェクトにも記録
+          
+          // ヒットエフェクト
           createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#FFD700", 5);
+          
+          // 5発当たったら倒す
+          if (bossHitCount >= 5) {
+            enemies.splice(j, 1);
+            score += enemy.score || 50;
+            totalEnemiesDefeated++;
+            // 大きな爆発エフェクト
+            createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#FF4500", 20);
+          }
           break;
         }
         
-        // 衝突したら弾と敵を消す
+        // 通常の敵の処理
         bullets.splice(i, 1);
         enemy.hp--;
         if (enemy.hp <= 0) {
