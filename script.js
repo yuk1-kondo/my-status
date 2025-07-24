@@ -279,9 +279,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.addEventListener("keydown", (e) => {
+    console.log("Key pressed:", e.key, "Player exists:", !!player);
     if (!player) return;
-    if (e.key === "ArrowLeft") player.dx = -player.speed;
-    if (e.key === "ArrowRight") player.dx = player.speed;
+    if (e.key === "ArrowLeft") {
+      player.dx = -player.speed;
+      console.log("Moving left, player.dx:", player.dx);
+    }
+    if (e.key === "ArrowRight") {
+      player.dx = player.speed;
+      console.log("Moving right, player.dx:", player.dx);
+    }
     if (e.key === " " || e.key === "Enter") shoot();
     if (e.key.toLowerCase() === "p") togglePause();
   });
@@ -394,6 +401,7 @@ function setCanvasSize() {
 }
 
 function initGame() {
+  console.log("Initializing game...");
   if (enemyInterval) clearInterval(enemyInterval);
   if (powerupInterval) clearInterval(powerupInterval);
   if (gameLoopId) cancelAnimationFrame(gameLoopId);
@@ -408,6 +416,7 @@ function initGame() {
     dx: 0,
     frameCount: 0
   };
+  console.log("Player initialized:", player);
   bullets = [];
   enemies = [];
   powerups = [];
@@ -463,6 +472,12 @@ function drawHUD() {
 function gameLoop() {
   if (gamePaused || gameOver || gameClear) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (!player) {
+    console.error("Player is not initialized!");
+    return;
+  }
+  
   updatePlayer();
   updateBullets();
   updateEnemies();
@@ -471,10 +486,18 @@ function gameLoop() {
   updateParticles();
   checkCollisions();
   drawHUD();
-  drawTrackingUI(ctx);
+  try {
+    drawTrackingUI(ctx);
+  } catch (error) {
+    console.error("Error calling drawTrackingUI:", error);
+  }
   
   // 追跡ミッションの進捗チェック
-  updateTrackingMissions();
+  try {
+    updateTrackingMissions();
+  } catch (error) {
+    console.error("Error calling updateTrackingMissions:", error);
+  }
   
   if (score >= targetScore) {
     gameClear = true;
@@ -811,18 +834,7 @@ function checkCollisions() {
       let bullet = enemyBullets[i];
       if (isColliding(player, bullet)) {
         // 弾かれた際のエフェクト
-        for (let k = 0; k < 5; k++) {
-          particles.push({
-            x: bullet.x + bullet.width / 2,
-            y: bullet.y + bullet.height / 2,
-            dx: (Math.random() - 0.5) * 4,
-            dy: (Math.random() - 0.5) * 4,
-            radius: Math.random() * 2 + 1,
-            color: "#00ff00",
-            life: 10 + Math.random() * 10,
-            initialLife: 10 + Math.random() * 10
-          });
-        }
+        createExplosion(bullet.x + bullet.width / 2, bullet.y + bullet.height / 2, "#00ff00", 5);
         enemyBullets.splice(i, 1);
       }
     }
@@ -836,18 +848,7 @@ function checkCollisions() {
         // 残機を減らす
         lives--;
         // エフェクト生成
-        for (let k = 0; k < 15; k++) {
-          particles.push({
-            x: player.x + player.width / 2,
-            y: player.y + player.height / 2,
-            dx: (Math.random() - 0.5) * 6,
-            dy: (Math.random() - 0.5) * 6,
-            radius: Math.random() * 3 + 2,
-            color: "#ffffff",
-            life: 20 + Math.random() * 10,
-            initialLife: 20 + Math.random() * 10
-          });
-        }
+        createExplosion(player.x + player.width / 2, player.y + player.height / 2, "#ffffff", 15);
         playerInvincible = true;
         invincibleTimer = 120; // 2秒間無敵
         enemies.splice(i, 1);
@@ -868,18 +869,7 @@ function checkCollisions() {
         // 残機を減らす
         lives--;
         // エフェクト生成
-        for (let k = 0; k < 15; k++) {
-          particles.push({
-            x: player.x + player.width / 2,
-            y: player.y + player.height / 2,
-            dx: (Math.random() - 0.5) * 6,
-            dy: (Math.random() - 0.5) * 6,
-            radius: Math.random() * 3 + 2,
-            color: "#ff3333",
-            life: 20 + Math.random() * 10,
-            initialLife: 20 + Math.random() * 10
-          });
-        }
+        createExplosion(player.x + player.width / 2, player.y + player.height / 2, "#ff3333", 15);
         playerInvincible = true;
         invincibleTimer = 120; // 2秒間無敵
         enemyBullets.splice(i, 1);
@@ -906,21 +896,11 @@ function checkCollisions() {
         if (enemy.hp <= 0) {
           // 敵のHPが0になったら敵を消す
           enemies.splice(j, 1);
-          score += 10;
+          score += enemy.score || 10;
           totalEnemiesDefeated++;
           // パーティクルを生成
-          for (let k = 0; k < 10; k++) {
-            particles.push({
-              x: enemy.x + enemy.width / 2,
-              y: enemy.y + enemy.height / 2,
-              dx: (Math.random() - 0.5) * 4,
-              dy: (Math.random() - 0.5) * 4,
-              radius: Math.random() * 3 + 2,
-              color: "#ffcc00",
-              life: 20 + Math.random() * 10,
-              initialLife: 20 + Math.random() * 10
-            });
-          }
+          createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 
+            enemy.type === "zigzag" ? enemy.currentColor : "#ffcc00", 10);
         }
         break;
       }
@@ -928,25 +908,294 @@ function checkCollisions() {
   }
 
   // プレイヤーとパワーアップアイテムの衝突判定
-  powerups.forEach((powerup, index) => {
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    let powerup = powerups[i];
     if (isColliding(player, powerup)) {
-      // 衝突したらパワーアップを適用
-      switch (powerup.type) {
-        case "rapidFire":
-          playerPowerupType = "rapidFire";
-          powerupTimer = 300;
-          break;
-        case "wideShot":
-          playerPowerupType = "wideShot";
-          powerupTimer = 300;
-          break;
-        case "shield":
-          playerInvincible = true;
-          invincibleTimer = 300;
-          break;
+      // パワーアップを適用
+      playerPowerupType = powerup.type;
+      powerupTimer = 600; // 約10秒間有効
+      let pu = powerupTypes.find(p => p.name === powerup.type);
+      if (pu) {
+        showPowerupNotification(pu.text);
       }
-      // パワーアップを消す
-      powerups.splice(index, 1);
+      powerups.splice(i, 1);
+    }
+  }
+}
+
+// 追跡ミッションシステムの機能
+function updateTrackingMissions() {
+  trackingMissions.forEach(mission => {
+    if (mission.completed) return;
+    
+    // 進捗更新
+    switch(mission.type) {
+      case 'enemy_count':
+        mission.progress = totalEnemiesDefeated;
+        break;
+      case 'score':
+        mission.progress = score;
+        break;
+    }
+    
+    // ミッション達成チェック
+    if (mission.progress >= mission.target) {
+      mission.completed = true;
+      revealClue(mission);
     }
   });
+}
+
+function revealClue(mission) {
+  if (discoveredClues.includes(mission.reward)) return;
+  
+  discoveredClues.push(mission.reward);
+  investigationProgress += 33.33; // 3段階なので
+  
+  showClueDiscovery(mission);
+}
+
+function showClueDiscovery(mission) {
+  const popup = document.createElement('div');
+  popup.className = 'clue-discovery';
+  popup.innerHTML = `
+    <div class="clue-popup">
+      🔍 手がかり発見！<br>
+      <span class="clue-title">${mission.name} 完了</span><br>
+      <span class="clue-text">${mission.reward}</span>
+    </div>
+  `;
+  document.body.appendChild(popup);
+  
+  setTimeout(() => {
+    if (popup.parentNode) {
+      popup.remove();
+    }
+  }, 4000);
+}
+
+function drawTrackingUI(ctx) {
+  try {
+    // 捜査進度の背景
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(canvas.width - 220, 10, 210, 120);
+    
+    // 枠線
+    ctx.strokeStyle = "#4a5eff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(canvas.width - 220, 10, 210, 120);
+    
+    // タイトル
+    ctx.fillStyle = "#4a5eff";
+    ctx.font = "bold 14px Arial";
+    ctx.fillText("🔍 こんちゃん捜索", canvas.width - 210, 30);
+    
+    // 進度バー
+    ctx.fillStyle = "#333";
+    ctx.fillRect(canvas.width - 210, 40, 190, 12);
+    ctx.fillStyle = "#4CAF50";
+    const progressWidth = Math.min((investigationProgress / 100) * 190, 190);
+    ctx.fillRect(canvas.width - 210, 40, progressWidth, 12);
+    
+    // 進度テキスト
+    ctx.fillStyle = "#fff";
+    ctx.font = "12px Arial";
+    ctx.fillText(`進度: ${Math.floor(investigationProgress)}%`, canvas.width - 210, 65);
+    
+    // 現在のミッション表示
+    ctx.fillStyle = "#ffff99";
+    ctx.font = "11px Arial";
+    let yOffset = 75;
+    
+    const activeMission = trackingMissions.find(m => !m.completed);
+    if (activeMission) {
+      ctx.fillText("現在の任務:", canvas.width - 210, yOffset);
+      yOffset += 15;
+      
+      const shortDesc = activeMission.description.length > 25 
+        ? activeMission.description.substring(0, 22) + "..." 
+        : activeMission.description;
+      ctx.fillText(shortDesc, canvas.width - 210, yOffset);
+      yOffset += 12;
+      
+      ctx.fillText(`進捗: ${activeMission.progress}/${activeMission.target}`, canvas.width - 210, yOffset);
+    } else {
+      ctx.fillText("全任務完了！", canvas.width - 210, yOffset);
+    }
+  } catch (error) {
+    console.error("drawTrackingUI error:", error);
+  }
+}
+
+// ゲームオーバー時の処理
+function endGame() {
+  gamePaused = true;
+  if (enemyInterval) clearInterval(enemyInterval);
+  if (powerupInterval) clearInterval(powerupInterval);
+  const overlay = document.getElementById("overlay");
+  
+  overlay.innerHTML = `
+    <div class="instructions">
+      <h2>GAME OVER</h2>
+      <p>残機がなくなりました。</p>
+      <button id="gameOverRestartBtn">リスタート</button>
+    </div>
+  `;
+  overlay.style.display = "flex";
+  
+  const gameOverRestartBtn = document.getElementById("gameOverRestartBtn");
+  gameOverRestartBtn.addEventListener("click", function() {
+    overlay.style.display = "none";
+    initGame();
+  });
+}
+
+// ゲームクリア後の処理
+function showLocationCard() {
+  gamePaused = true;
+  if (enemyInterval) clearInterval(enemyInterval);
+  if (powerupInterval) clearInterval(powerupInterval);
+  
+  // 最終手がかり発見の演出
+  if (investigationProgress >= 100) {
+    showFinalLocationReveal();
+  }
+  
+  // 豪華な発見演出を開始
+  showDiscoveryCelebration();
+}
+
+// 豪華な「こんちゃん発見」演出
+function showDiscoveryCelebration() {
+  // 1. フルスクリーンお祝い画面を作成
+  const celebration = document.createElement('div');
+  celebration.className = 'discovery-celebration';
+  celebration.innerHTML = `
+    <div class="celebration-message">🎉 こんちゃん発見！ 🎉</div>
+    <div class="celebration-submessage">すべての手がかりを集めました！</div>
+  `;
+  document.body.appendChild(celebration);
+  
+  // 2. キラキラエフェクトを追加
+  createSparkleEffect(celebration);
+  
+  // 3. 3秒後に位置情報カードを表示
+  setTimeout(() => {
+    celebration.remove();
+    showEnhancedLocationCard();
+  }, 3000);
+}
+
+// キラキラエフェクト
+function createSparkleEffect(container) {
+  const sparkleSymbols = ['✨', '⭐', '💫', '🌟', '✴️'];
+  
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.textContent = sparkleSymbols[Math.floor(Math.random() * sparkleSymbols.length)];
+      sparkle.style.left = Math.random() * 100 + '%';
+      sparkle.style.top = Math.random() * 100 + '%';
+      sparkle.style.animationDelay = Math.random() * 2 + 's';
+      container.appendChild(sparkle);
+      
+      // 3秒後に削除
+      setTimeout(() => {
+        if (sparkle.parentNode) {
+          sparkle.remove();
+        }
+      }, 3000);
+    }, i * 100);
+  }
+}
+
+// 拡張されたロケーションカード表示
+function showEnhancedLocationCard() {
+  const locationCard = document.getElementById("locationCard");
+  locationCard.classList.add('enhanced');
+  locationCard.style.display = "flex";
+  
+  // 位置情報を取得して表示
+  fetch("location.json")
+    .then(response => response.json())
+    .then(data => {
+      // アニメーション付きで位置情報を表示
+      setTimeout(() => {
+        document.getElementById("status").textContent = data.status.trim();
+        document.getElementById("lastUpdated").textContent = data.last_updated;
+        
+        // 位置情報表示時のエフェクト
+        const statusElement = document.getElementById("status");
+        statusElement.style.animation = "bounceIn 1s ease-out";
+      }, 500);
+    })
+    .catch(error => {
+      console.error("location.json の読み込みに失敗しました:", error);
+      document.getElementById("status").textContent = "情報取得失敗";
+      document.getElementById("lastUpdated").textContent = new Date().toLocaleString();
+    });
+  
+  // リスタートボタンの処理
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    const newRestartBtn = restartBtn.cloneNode(true);
+    restartBtn.parentNode.replaceChild(newRestartBtn, restartBtn);
+    
+    newRestartBtn.addEventListener("click", () => {
+      locationCard.classList.remove('enhanced');
+      locationCard.style.display = "none";
+      initGame();
+    });
+  }
+}
+
+function showFinalLocationReveal() {
+  const finalReveal = document.createElement('div');
+  finalReveal.className = 'clue-discovery';
+  finalReveal.innerHTML = `
+    <div class="clue-popup" style="min-width: 320px;">
+      <h2 style="margin-top: 0; color: #ffff99;">🎯 捜査完了！</h2>
+      <p>すべての手がかりを発見しました！</p>
+      <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+        ${discoveredClues.map(clue => `<div style="margin: 5px 0; font-size: 14px;">✓ ${clue}</div>`).join('')}
+      </div>
+      <div style="font-size: 20px; font-weight: bold; color: #00ff00;">
+        🎉 こんちゃんを発見！ 🎉
+      </div>
+    </div>
+  `;
+  document.body.appendChild(finalReveal);
+  
+  setTimeout(() => {
+    if (finalReveal.parentNode) {
+      finalReveal.remove();
+    }
+  }, 6000);
+}
+
+// パワーアップ通知表示
+function showPowerupNotification(text) {
+  const notification = document.getElementById("powerupNotification");
+  notification.textContent = text;
+  notification.style.display = "block";
+  
+  setTimeout(() => {
+    notification.style.display = "none";
+  }, 3000);
+}
+
+// 当たり判定用のヘルパー関数
+function isColliding(a, b) {
+  return a.x < b.x + b.width &&
+         a.x + a.width > b.x &&
+         a.y < b.y + b.height &&
+         a.y + a.height > b.y;
+}
+
+function togglePause() {
+  gamePaused = !gamePaused;
+  if (!gamePaused) {
+    gameLoop();
+  }
 }
