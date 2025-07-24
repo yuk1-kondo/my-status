@@ -404,8 +404,8 @@ function handleTouchStart(e) {
     const touchY = touch.clientY - rect.top;
     const touchX = touch.clientX - rect.left;
 
-    // 画面下部30%は移動操作エリア
-    if (touchY > canvas.height * 0.7) {
+    // 画面下部15%は移動操作エリア
+    if (touchY > canvas.height * 0.85) {
       movementTouchId = touch.identifier;
       touchStartX = touchX;
       lastTouchX = touchX;
@@ -583,21 +583,21 @@ function drawTouchAreas() {
   const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
   if (!isMobile) return;
   
-  // 射撃エリア（上部70%）
+  // 射撃エリア（上部85%）
   ctx.fillStyle = "rgba(255, 255, 0, 0.05)"; // 薄い黄色
-  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.7);
+  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.85);
   
-  // 移動エリア（下部30%）
+  // 移動エリア（下部15%）
   ctx.fillStyle = "rgba(0, 255, 255, 0.08)"; // 薄いシアン
-  ctx.fillRect(0, canvas.height * 0.7, canvas.width, canvas.height * 0.3);
+  ctx.fillRect(0, canvas.height * 0.85, canvas.width, canvas.height * 0.15);
   
   // エリア境界線
   ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 5]);
   ctx.beginPath();
-  ctx.moveTo(0, canvas.height * 0.7);
-  ctx.lineTo(canvas.width, canvas.height * 0.7);
+  ctx.moveTo(0, canvas.height * 0.85);
+  ctx.lineTo(canvas.width, canvas.height * 0.85);
   ctx.stroke();
   ctx.setLineDash([]); // 破線をリセット
   
@@ -605,16 +605,16 @@ function drawTouchAreas() {
   if (isDragging && lastTouchX !== null) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
     ctx.beginPath();
-    ctx.arc(lastTouchX, canvas.height * 0.85, 25, 0, Math.PI * 2);
+    ctx.arc(lastTouchX, canvas.height * 0.925, 25, 0, Math.PI * 2);
     ctx.fill();
     
     // 移動方向の矢印
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
     ctx.font = "20px Arial";
     if (player.dx > 0) {
-      ctx.fillText("→", lastTouchX - 10, canvas.height * 0.85 + 7);
+      ctx.fillText("→", lastTouchX - 10, canvas.height * 0.925 + 7);
     } else if (player.dx < 0) {
-      ctx.fillText("←", lastTouchX - 10, canvas.height * 0.85 + 7);
+      ctx.fillText("←", lastTouchX - 10, canvas.height * 0.925 + 7);
     }
   }
   
@@ -631,10 +631,10 @@ function drawTouchAreas() {
     ctx.textAlign = "center";
     
     // 射撃エリアの説明
-    ctx.fillText("💥 タップで弾発射", canvas.width / 2, canvas.height * 0.35);
+    ctx.fillText("💥 タップで弾発射", canvas.width / 2, canvas.height * 0.42);
     
     // 移動エリアの説明
-    ctx.fillText("👆 ドラッグで左右移動", canvas.width / 2, canvas.height * 0.85);
+    ctx.fillText("👆 ドラッグで左右移動", canvas.width / 2, canvas.height * 0.925);
     
     ctx.textAlign = "left"; // テキスト配置をリセット
   }
