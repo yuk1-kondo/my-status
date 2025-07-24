@@ -708,8 +708,13 @@ function spawnEnemyBullet(enemy) {
   const hDiff = playerCenterX - enemyCenterX;
   const baseAngle = Math.atan2(vDiff, hDiff);
 
-  // 角度のオフセット（ラジアン単位）：真ん中、左、右に3発
-  const angleOffsets = [0, -0.2, 0.2];
+  // ターコイズロボット（gray）は2発、その他は3発
+  let angleOffsets;
+  if (enemy.type === "gray") {
+    angleOffsets = [-0.15, 0.15]; // 左右2発
+  } else {
+    angleOffsets = [0, -0.2, 0.2]; // 真ん中、左、右に3発
+  }
 
   angleOffsets.forEach(offset => {
     const angle = baseAngle + offset;
@@ -813,11 +818,14 @@ function spawnEnemy(type) {
     enemy.colorChangeRate = 10 + Math.floor(Math.random() * 20);
   } else if (type === "boss") {
     enemy.hp = 10; // ボスは体力が多い
-    enemy.speed = 0.8;
+    enemy.speed = 1.5; // 横移動速度
     enemy.score = 50;
     enemy.canShoot = true;
-    enemy.shootInterval = 60; // 頻繁に弾を撃つ
-    enemy.amplitude = 50;
+    enemy.shootInterval = 180; // 攻撃頻度を下げる（60→180）
+    enemy.direction = Math.random() < 0.5 ? -1 : 1; // 左右どちらから出現するか
+    enemy.x = enemy.direction === 1 ? -width : canvas.width; // 画面外から開始
+    enemy.y = Math.random() * (canvas.height * 0.3) + 50; // 上部1/3の範囲
+    enemy.isInvincible = true; // 倒せないパターン
     enemy.frequency = 0.02;
     enemy.startX = x;
   } else if (type === "fast") {
@@ -849,14 +857,20 @@ function updateEnemies() {
         enemy.currentColor = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
       }
     } else if (enemy.type === "boss") {
-      enemy.y += enemy.speed;
-      enemy.x = enemy.startX + Math.sin(enemy.y * enemy.frequency) * enemy.amplitude;
-      // プレイヤーを超えていない場合のみ攻撃
-      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0 && enemy.y < player.y) {
+      // 左右移動パターン
+      enemy.x += enemy.speed * enemy.direction;
+      
+      // 攻撃頻度を抑制
+      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0) {
         spawnEnemyBullet(enemy);
-        // ボスは3方向に弾を撃つ
-        spawnEnemyBullet({...enemy, x: enemy.x - 10});
+        // ボスは2方向に弾を撃つ（3→2に減少）
         spawnEnemyBullet({...enemy, x: enemy.x + 10});
+      }
+      
+      // 画面外に出たら削除
+      if (enemy.x < -enemy.width || enemy.x > canvas.width) {
+        enemies.splice(i, 1);
+        continue;
       }
     } else if (enemy.type === "fast") {
       enemy.y += enemy.speed;
@@ -1056,6 +1070,14 @@ function checkCollisions() {
     for (let j = enemies.length - 1; j >= 0; j--) {
       let enemy = enemies[j];
       if (isColliding(bullet, enemy)) {
+        // ボスは倒せないパターン（弾は消えるが、ボスはダメージを受けない）
+        if (enemy.type === "boss" && enemy.isInvincible) {
+          bullets.splice(i, 1);
+          // エフェクトのみ表示
+          createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#FFD700", 5);
+          break;
+        }
+        
         // 衝突したら弾と敵を消す
         bullets.splice(i, 1);
         enemy.hp--;
