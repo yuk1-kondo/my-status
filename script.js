@@ -411,11 +411,11 @@ function handleTouchStart(e) {
       lastTouchX = touchX;
       isDragging = true;
       
-      // 初期方向設定
+      // 初期方向設定（速度を抑制）
       if (touchX < canvas.width / 2) {
-        player.dx = -player.speed;
+        player.dx = -player.speed * 0.8; // 初期速度を80%に
       } else {
-        player.dx = player.speed;
+        player.dx = player.speed * 0.8; // 初期速度を80%に
       }
     } else { // それ以外は弾発射エリア
       shoot();
@@ -436,13 +436,13 @@ function handleTouchMove(e) {
       if (isDragging && lastTouchX !== null) {
         // ドラッグの方向と速度を計算
         const deltaX = touchX - lastTouchX;
-        const sensitivity = 0.8; // 感度調整
+        const sensitivity = 0.4; // 感度を下げる（0.8→0.4）
         
-        if (Math.abs(deltaX) > 2) { // 最小移動閾値
+        if (Math.abs(deltaX) > 3) { // 最小移動閾値を上げる（2→3）
           if (deltaX > 0) {
-            player.dx = Math.min(player.speed * 1.5, player.speed + Math.abs(deltaX) * sensitivity);
+            player.dx = Math.min(player.speed * 1.2, player.speed + Math.abs(deltaX) * sensitivity);
           } else {
-            player.dx = Math.max(-player.speed * 1.5, -player.speed - Math.abs(deltaX) * sensitivity);
+            player.dx = Math.max(-player.speed * 1.2, -player.speed - Math.abs(deltaX) * sensitivity);
           }
         }
       }
