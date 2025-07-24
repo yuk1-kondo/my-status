@@ -469,6 +469,32 @@ function drawHUD() {
   ctx.fillText(`レベル: ${level}`, 20, 70);
 }
 
+// Simple tracking UI function
+function drawTrackingUI(ctx) {
+  // Simple tracking info display
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(canvas.width - 200, 10, 190, 80);
+  
+  ctx.strokeStyle = "#4a5eff";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(canvas.width - 200, 10, 190, 80);
+  
+  ctx.fillStyle = "#4a5eff";
+  ctx.font = "12px Arial";
+  ctx.fillText("こんちゃん捜索", canvas.width - 190, 30);
+  
+  ctx.fillStyle = "#fff";
+  ctx.font = "10px Arial";
+  ctx.fillText(`進度: ${Math.floor(investigationProgress || 0)}%`, canvas.width - 190, 50);
+  
+  // Simple progress bar
+  ctx.fillStyle = "#333";
+  ctx.fillRect(canvas.width - 190, 55, 170, 8);
+  ctx.fillStyle = "#4CAF50";
+  const progress = (investigationProgress || 0) / 100;
+  ctx.fillRect(canvas.width - 190, 55, 170 * progress, 8);
+}
+
 function gameLoop() {
   if (gamePaused || gameOver || gameClear) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -486,6 +512,7 @@ function gameLoop() {
   updateParticles();
   checkCollisions();
   drawHUD();
+  // Tracking UI display
   try {
     drawTrackingUI(ctx);
   } catch (error) {
