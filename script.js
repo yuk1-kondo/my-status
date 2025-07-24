@@ -760,6 +760,10 @@ function startEnemyGeneration() {
   
   enemyInterval = setInterval(() => {
     if (gamePaused || gameOver || gameClear) return;
+    
+    // 現在ボスが画面上にいるかチェック
+    const bossExists = enemies.some(enemy => enemy.type === "boss");
+    
     const rand = Math.random();
     if (rand < 0.2) {
       spawnEnemy("gray");   // 20%の確率でグレー
@@ -769,8 +773,8 @@ function startEnemyGeneration() {
       spawnEnemy("zigzag"); // 20%でジグザグ
     } else if (rand < 0.75) {
       spawnEnemy("fast");   // 20%で高速敵
-    } else if (!bossSpawned) {
-      spawnEnemy("boss");   // ボス敵（1回のみ）
+    } else if (!bossSpawned && !bossExists) {
+      spawnEnemy("boss");   // ボス敵（1回のみ、画面上にいない場合のみ）
       bossSpawned = true;   // ボス出現フラグを立てる
     } else {
       spawnEnemy("gray");   // ボス出現済みの場合はグレー敵
@@ -828,7 +832,7 @@ function spawnEnemy(type) {
   } else if (type === "boss") {
     enemy.hp = 5; // 5発で倒せるように変更
     enemy.speed = 1.5; // 横移動速度
-    enemy.score = 50;
+    enemy.score = 30; // スコアを30に変更
     enemy.canShoot = true;
     enemy.shootInterval = 180; // 攻撃頻度を下げる
     enemy.direction = Math.random() < 0.5 ? -1 : 1; // 左右どちらから出現するか
@@ -1093,7 +1097,7 @@ function checkCollisions() {
           // 5発当たったら倒す
           if (bossHitCount >= 5) {
             enemies.splice(j, 1);
-            score += enemy.score || 50;
+            score += enemy.score || 30; // スコアを30に修正
             totalEnemiesDefeated++;
             // 大きな爆発エフェクト
             createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#FF4500", 20);
