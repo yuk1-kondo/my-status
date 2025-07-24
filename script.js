@@ -1362,4 +1362,4 @@ function togglePause() {
   if (!gamePaused) {
     gameLoop();
   }
-}
+}// Force update #午後
