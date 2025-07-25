@@ -340,7 +340,14 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("Canvas found:", canvas);
   loadGameAssets();
   setCanvasSize();
-  window.addEventListener("resize", setCanvasSize);
+  
+  // 説明画面のレスポンシブ調整
+  adjustInstructionsForMobile();
+  
+  window.addEventListener("resize", () => {
+    setCanvasSize();
+    adjustInstructionsForMobile();
+  });
 
   document.getElementById("startBtn").addEventListener("click", () => {
     document.getElementById("overlay").style.display = "none";
@@ -491,6 +498,48 @@ function setCanvasSize() {
   if (player) {
     player.x = Math.min(player.x, canvas.width - player.width);
     player.y = canvas.height - 40;
+  }
+}
+
+// 説明画面のモバイル向け動的調整
+function adjustInstructionsForMobile() {
+  const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+  const instructions = document.querySelector('.instructions');
+  const startBtn = document.getElementById('startBtn');
+  
+  if (isMobile && instructions) {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 画面サイズに応じて動的にフォントサイズを調整
+    const baseFontSize = Math.max(10, Math.min(14, windowWidth * 0.035));
+    const titleSize = Math.max(14, Math.min(20, windowWidth * 0.05));
+    const buttonSize = Math.max(14, Math.min(18, windowWidth * 0.045));
+    const padding = Math.max(10, Math.min(20, windowWidth * 0.04));
+    
+    // スタイルを動的に適用
+    instructions.style.fontSize = baseFontSize + 'px';
+    instructions.style.padding = padding + 'px';
+    instructions.style.maxHeight = (windowHeight * 0.6) + 'px';
+    instructions.style.lineHeight = '1.3';
+    
+    const h2 = instructions.querySelector('h2');
+    if (h2) {
+      h2.style.fontSize = titleSize + 'px';
+      h2.style.marginBottom = '8px';
+    }
+    
+    const lis = instructions.querySelectorAll('li');
+    lis.forEach(li => {
+      li.style.fontSize = (baseFontSize - 1) + 'px';
+      li.style.marginBottom = '6px';
+      li.style.lineHeight = '1.25';
+    });
+    
+    if (startBtn) {
+      startBtn.style.fontSize = buttonSize + 'px';
+      startBtn.style.padding = '10px 20px';
+    }
   }
 }
 
@@ -803,9 +852,11 @@ function spawnEnemyBullet(enemy) {
   const hDiff = playerCenterX - enemyCenterX;
   const baseAngle = Math.atan2(vDiff, hDiff);
 
-  // ターコイズロボット（gray）は2発、その他は3発
+  // ライムUFO（orange）は4発、ターコイズロボット（gray）は2発、その他は3発
   let angleOffsets;
-  if (enemy.type === "gray") {
+  if (enemy.type === "orange") {
+    angleOffsets = [-0.3, -0.1, 0.1, 0.3]; // 左から右に4発
+  } else if (enemy.type === "gray") {
     angleOffsets = [-0.15, 0.15]; // 左右2発
   } else {
     angleOffsets = [0, -0.2, 0.2]; // 真ん中、左、右に3発
@@ -821,7 +872,8 @@ function spawnEnemyBullet(enemy) {
       speed: bulletSpeed,
       dx: Math.cos(angle) * bulletSpeed,
       dy: Math.sin(angle) * bulletSpeed,
-      color: "#ff3333"
+      color: enemy.type === "orange" ? "#32CD32" : "#ff3333", // ライムUFOの弾は緑色
+      enemyType: enemy.type // 弾の種類を記録
     });
   });
 }
@@ -854,13 +906,13 @@ function startEnemyGeneration() {
     const bossExists = enemies.some(enemy => enemy.type === "boss");
     
     const rand = Math.random();
-    if (rand < 0.2) {
-      spawnEnemy("gray");   // 20%の確率でグレー
-    } else if (rand < 0.35) {
-      spawnEnemy("orange"); // 15%でオレンジ
-    } else if (rand < 0.55) {
+    if (rand < 0.15) {
+      spawnEnemy("gray");   // 15%の確率でグレー
+    } else if (rand < 0.45) {
+      spawnEnemy("orange"); // 30%でライムUFO（2倍に増加）
+    } else if (rand < 0.65) {
       spawnEnemy("zigzag"); // 20%でジグザグ
-    } else if (rand < 0.75) {
+    } else if (rand < 0.85) {
       spawnEnemy("fast");   // 20%で高速敵
     } else if (!bossSpawned && !bossExists) {
       spawnEnemy("boss");   // ボス敵（1回のみ、画面上にいない場合のみ）
@@ -904,10 +956,10 @@ function spawnEnemy(type) {
     enemy.shootInterval = 120 + Math.floor(Math.random() * 50);
   } else if (type === "orange") {
     enemy.speed = 2 + Math.random() * 1;
-    enemy.score = -5;
-    if (Math.random() < 0.3) {
+    enemy.score = -10; // -10点に変更
+    if (Math.random() < 0.8) { // 攻撃頻度を上げる（80%）
       enemy.canShoot = true;
-      enemy.shootInterval = 100 + Math.floor(Math.random() * 50);
+      enemy.shootInterval = 80 + Math.floor(Math.random() * 40); // 攻撃間隔を短縮
     }
   } else if (type === "zigzag") {
     enemy.hp = 3;
@@ -919,9 +971,9 @@ function spawnEnemy(type) {
     enemy.currentColor = zigzagColors[Math.floor(Math.random() * zigzagColors.length)];
     enemy.colorChangeRate = 10 + Math.floor(Math.random() * 20);
   } else if (type === "boss") {
-    enemy.hp = 5; // 5発で倒せるように変更
+    enemy.hp = 10; // 10発で倒せるように変更
     enemy.speed = 1.5; // 横移動速度
-    enemy.score = 30; // スコアを30に変更
+    enemy.score = 50; // スコアを50に増加
     enemy.canShoot = true;
     enemy.shootInterval = 180; // 攻撃頻度を下げる
     enemy.direction = Math.random() < 0.5 ? -1 : 1; // 左右どちらから出現するか
@@ -1150,18 +1202,27 @@ function checkCollisions() {
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
       let bullet = enemyBullets[i];
       if (isColliding(player, bullet)) {
-        // 残機を減らす
-        lives--;
-        // エフェクト生成
-        createExplosion(player.x + player.width / 2, player.y + player.height / 2, "#ff3333", 15);
-        playerInvincible = true;
-        invincibleTimer = 120; // 2秒間無敵
-        enemyBullets.splice(i, 1);
-        
-        if (lives <= 0) {
-          gameOver = true;
-          endGame();
-          return;
+        // ライムUFOの弾の場合はスコア減少のみ
+        if (bullet.enemyType === "orange") {
+          score -= 10; // スコア10点減少
+          if (score < 0) score = 0; // マイナスにならないように
+          // 緑色のエフェクト生成
+          createExplosion(player.x + player.width / 2, player.y + player.height / 2, "#32CD32", 8);
+          enemyBullets.splice(i, 1);
+        } else {
+          // 他の敵弾の場合は残機を減らす
+          lives--;
+          // エフェクト生成
+          createExplosion(player.x + player.width / 2, player.y + player.height / 2, "#ff3333", 15);
+          playerInvincible = true;
+          invincibleTimer = 120; // 2秒間無敵
+          enemyBullets.splice(i, 1);
+          
+          if (lives <= 0) {
+            gameOver = true;
+            endGame();
+            return;
+          }
         }
         break;
       }
@@ -1183,10 +1244,10 @@ function checkCollisions() {
           // ヒットエフェクト
           createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#FFD700", 5);
           
-          // 5発当たったら倒す
-          if (bossHitCount >= 5) {
+          // 10発当たったら倒す
+          if (bossHitCount >= 10) {
             enemies.splice(j, 1);
-            score += enemy.score || 30; // スコアを30に修正
+            score += enemy.score || 50; // スコアを50に修正
             totalEnemiesDefeated++;
             // 大きな爆発エフェクト
             createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#FF4500", 20);

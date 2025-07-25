@@ -409,6 +409,43 @@ canvas {
 
 /* モバイル向けレスポンシブ追加スタイル */
 @media (max-width: 768px) {
+  /* 初期説明画面のレスポンシブ対応 */
+  .instructions {
+    padding: 15px !important;
+    font-size: 14px !important;
+    max-height: 60vh !important;
+    margin: 10px !important;
+    line-height: 1.3 !important;
+  }
+  
+  .instructions h2 {
+    font-size: 18px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.2;
+  }
+  
+  .instructions ul {
+    margin: 10px 0 !important;
+    padding-left: 15px !important;
+  }
+  
+  .instructions li {
+    margin-bottom: 8px !important;
+    font-size: 13px !important;
+    line-height: 1.3;
+  }
+  
+  .instructions p {
+    font-size: 14px !important;
+    margin: 10px 0 !important;
+  }
+  
+  #startBtn {
+    font-size: 18px !important;
+    padding: 12px 24px !important;
+    margin-top: 15px !important;
+  }
+  
   /* ゲームクリア・ゲームオーバーポップアップ */
   .instructions h2 {
     font-size: 1.5rem !important;
@@ -435,5 +472,28 @@ canvas {
     max-width: 80vw !important;
     word-wrap: break-word;
     white-space: normal;
+  }
+}
+
+/* さらに小さい画面（iPhone SE等）向け */
+@media (max-width: 375px) {
+  .instructions {
+    padding: 10px !important;
+    font-size: 12px !important;
+    max-height: 55vh !important;
+  }
+  
+  .instructions h2 {
+    font-size: 16px !important;
+  }
+  
+  .instructions li {
+    font-size: 11px !important;
+    margin-bottom: 6px !important;
+  }
+  
+  #startBtn {
+    font-size: 16px !important;
+    padding: 10px 20px !important;
   }
 }
