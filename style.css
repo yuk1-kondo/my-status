@@ -53,6 +53,11 @@ canvas {
   font-weight: bold;
   text-shadow: 0 0 5px #00ffff;
   display: none;
+  z-index: 100;
+  text-align: center;
+  box-sizing: border-box;
+  max-width: 90vw;
+  word-wrap: break-word;
 }
 
 /* ゲーム説明オーバーレイ */
@@ -398,7 +403,37 @@ canvas {
   }
   
   #locationCard .card {
-    padding: 10px;
-    width: 90%;
+    font-size: 14px;
+  }
+}
+
+/* モバイル向けレスポンシブ追加スタイル */
+@media (max-width: 768px) {
+  /* ゲームクリア・ゲームオーバーポップアップ */
+  .instructions h2 {
+    font-size: 1.5rem !important;
+    white-space: nowrap;
+    overflow: visible;
+  }
+  
+  .instructions p {
+    font-size: 1rem !important;
+    line-height: 1.4;
+  }
+  
+  .instructions button {
+    font-size: 1rem !important;
+    padding: 12px 20px !important;
+    white-space: nowrap;
+    min-width: 100px;
+  }
+  
+  /* パワーアップ通知 */
+  #powerupNotification {
+    font-size: 16px !important;
+    padding: 8px 12px !important;
+    max-width: 80vw !important;
+    word-wrap: break-word;
+    white-space: normal;
   }
 }

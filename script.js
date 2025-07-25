@@ -1338,11 +1338,32 @@ function endGame() {
   if (powerupInterval) clearInterval(powerupInterval);
   const overlay = document.getElementById("overlay");
   
+  // モバイル判定とレスポンシブサイズ計算
+  const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+  const windowWidth = window.innerWidth;
+  const fontSize = isMobile ? Math.max(16, windowWidth * 0.045) : 18;
+  const titleSize = isMobile ? Math.max(20, windowWidth * 0.06) : 24;
+  const buttonSize = isMobile ? Math.max(16, windowWidth * 0.045) : 18;
+  
   overlay.innerHTML = `
-    <div class="instructions">
-      <h2>GAME OVER</h2>
-      <p>残機がなくなりました。</p>
-      <button id="gameOverRestartBtn">リスタート</button>
+    <div class="instructions" style="
+      max-width: ${isMobile ? '90vw' : '400px'};
+      padding: ${isMobile ? '20px' : '30px'};
+      box-sizing: border-box;
+    ">
+      <h2 style="font-size: ${titleSize}px; margin-bottom: 15px; white-space: nowrap;">GAME OVER</h2>
+      <p style="font-size: ${fontSize}px; margin-bottom: 20px;">残機がなくなりました。</p>
+      <button id="gameOverRestartBtn" style="
+        font-size: ${buttonSize}px;
+        padding: 12px 24px;
+        min-width: 120px;
+        white-space: nowrap;
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      ">リスタート</button>
     </div>
   `;
   overlay.style.display = "flex";
@@ -1366,6 +1387,17 @@ function showLocationCard() {
 
 // シンプルなゲームクリア表示（居場所情報付き）
 function showSimpleGameClear() {
+  // モバイル判定
+  const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
+  // モバイル用のレスポンシブサイズ計算
+  const popupWidth = isMobile ? Math.min(windowWidth * 0.9, 350) : 400;
+  const fontSize = isMobile ? Math.max(14, windowWidth * 0.04) : 16;
+  const titleSize = isMobile ? Math.max(18, windowWidth * 0.05) : 24;
+  const padding = isMobile ? Math.max(15, windowWidth * 0.04) : 30;
+  
   const popup = document.createElement('div');
   popup.style.cssText = `
     position: fixed;
@@ -1374,31 +1406,37 @@ function showSimpleGameClear() {
     transform: translate(-50%, -50%);
     background: rgba(0, 0, 0, 0.9);
     color: white;
-    padding: 30px;
+    padding: ${padding}px;
     border-radius: 10px;
     text-align: center;
     font-family: Arial, sans-serif;
     z-index: 1000;
     border: 3px solid #4CAF50;
-    max-width: 400px;
+    max-width: ${popupWidth}px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-sizing: border-box;
   `;
   
   popup.innerHTML = `
-    <h2 style="margin: 0 0 15px 0; color: #4CAF50;">🎉 ゲームクリア！ 🎉</h2>
-    <p style="margin: 0 0 20px 0; color: #fff;">スコア: ${score}点</p>
+    <h2 style="margin: 0 0 15px 0; color: #4CAF50; font-size: ${titleSize}px; white-space: nowrap;">🎉 ゲームクリア！ 🎉</h2>
+    <p style="margin: 0 0 20px 0; color: #fff; font-size: ${fontSize}px;">スコア: ${score}点</p>
     <div style="margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-      <h3 style="margin: 0 0 10px 0; color: #ffff99;">📍 こんちゃんイマココ</h3>
-      <p style="margin: 5px 0; color: #00ffff;"><strong>場所:</strong> <span id="locationStatus">読み込み中...</span></p>
-      <p style="margin: 5px 0; color: #00ffff;"><strong>更新:</strong> <span id="locationTime">読み込み中...</span></p>
+      <h3 style="margin: 0 0 10px 0; color: #ffff99; font-size: ${fontSize + 2}px;">📍 こんちゃんイマココ</h3>
+      <p style="margin: 5px 0; color: #00ffff; font-size: ${fontSize - 1}px; word-wrap: break-word;"><strong>場所:</strong> <span id="locationStatus">読み込み中...</span></p>
+      <p style="margin: 5px 0; color: #00ffff; font-size: ${fontSize - 1}px; word-wrap: break-word;"><strong>更新:</strong> <span id="locationTime">読み込み中...</span></p>
     </div>
     <button onclick="location.reload()" style="
       background: #4CAF50;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 5px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: ${fontSize}px;
+      white-space: nowrap;
+      min-width: 120px;
     ">もう一度プレイ</button>
   `;
   
@@ -1421,8 +1459,19 @@ function showSimpleGameClear() {
 // パワーアップ通知表示
 function showPowerupNotification(text) {
   const notification = document.getElementById("powerupNotification");
+  
+  // モバイル判定とレスポンシブサイズ計算
+  const isMobile = window.matchMedia("(max-width: 768px)").matches || /Mobi|Android/i.test(navigator.userAgent);
+  const windowWidth = window.innerWidth;
+  const fontSize = isMobile ? Math.max(14, windowWidth * 0.04) : 16;
+  
   notification.textContent = text;
   notification.style.display = "block";
+  notification.style.fontSize = fontSize + "px";
+  notification.style.maxWidth = isMobile ? "80vw" : "300px";
+  notification.style.padding = isMobile ? "8px 12px" : "10px 15px";
+  notification.style.wordWrap = "break-word";
+  notification.style.whiteSpace = "normal";
   
   setTimeout(() => {
     notification.style.display = "none";
@@ -1439,17 +1488,6 @@ function togglePause() {
     powerupInterval = setInterval(spawnPowerup, 15000);
     gameLoop();
   }
-}
-
-// パワーアップ通知表示
-function showPowerupNotification(text) {
-  const notification = document.getElementById("powerupNotification");
-  notification.textContent = text;
-  notification.style.display = "block";
-  
-  setTimeout(() => {
-    notification.style.display = "none";
-  }, 3000);
 }
 
 // 当たり判定用のヘルパー関数
