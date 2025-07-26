@@ -16,11 +16,17 @@ let movementTouchId = null;
 let starfield = []; // 星のパーティクル
 let bossSpawned = false; // ボスが既に出現したかどうか
 let bossHitCount = 0; // ボスへのヒット数を記録
+let timeSlowActive = false; // スローモーションフラグ
+let doubleScoreActive = false; // スコア2倍フラグ
+let gameSpeedMultiplier = 1; // ゲーム速度倍率
 const zigzagColors = ["#ff3366", "#33ccff", "#ff9900", "#66ff33", "#9933ff"];
 const powerupTypes = [
   { name: "rapidFire", color: "#ffff00", text: "連射モード！" },
   { name: "wideShot", color: "#00ffff", text: "ワイドショット！" },
-  { name: "shield", color: "#00ff00", text: "シールド！" }
+  { name: "shield", color: "#00ff00", text: "シールド！" },
+  { name: "laserBeam", color: "#ff00ff", text: "貫通レーザー！" },
+  { name: "timeSlow", color: "#ffa500", text: "スローモーション！" },
+  { name: "doubleScore", color: "#ffd700", text: "スコア2倍！" }
 ];
 
 // 星のパーティクル初期化
@@ -253,6 +259,64 @@ function loadGameAssets() {
   fastCtx.arc(7.5, 7.5, 3, 0, Math.PI * 2);
   fastCtx.fill();
 
+  // 新敵：シールド敵（緑の六角形シールド持ち）
+  sprites.enemies.shieldEnemy = document.createElement('canvas');
+  sprites.enemies.shieldEnemy.width = 25;
+  sprites.enemies.shieldEnemy.height = 25;
+  let shieldCtx = sprites.enemies.shieldEnemy.getContext('2d');
+  shieldCtx.fillStyle = "#228B22"; // フォレストグリーン
+  shieldCtx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI / 3);
+    const x = 12.5 + 10 * Math.cos(angle);
+    const y = 12.5 + 10 * Math.sin(angle);
+    if (i === 0) shieldCtx.moveTo(x, y);
+    else shieldCtx.lineTo(x, y);
+  }
+  shieldCtx.closePath();
+  shieldCtx.fill();
+  shieldCtx.fillStyle = "#32CD32"; // ライムグリーン
+  shieldCtx.beginPath();
+  shieldCtx.arc(12.5, 12.5, 5, 0, Math.PI * 2);
+  shieldCtx.fill();
+
+  // 新敵：分裂敵（オレンジの三角形）
+  sprites.enemies.splittingEnemy = document.createElement('canvas');
+  sprites.enemies.splittingEnemy.width = 20;
+  sprites.enemies.splittingEnemy.height = 20;
+  let splitCtx = sprites.enemies.splittingEnemy.getContext('2d');
+  splitCtx.fillStyle = "#FF8C00"; // ダークオレンジ
+  splitCtx.beginPath();
+  splitCtx.moveTo(10, 2);
+  splitCtx.lineTo(2, 18);
+  splitCtx.lineTo(18, 18);
+  splitCtx.closePath();
+  splitCtx.fill();
+  splitCtx.fillStyle = "#FFD700"; // ゴールド
+  splitCtx.beginPath();
+  splitCtx.arc(10, 10, 3, 0, Math.PI * 2);
+  splitCtx.fill();
+
+  // 新敵：テレポート敵（紫の星形）
+  sprites.enemies.teleportEnemy = document.createElement('canvas');
+  sprites.enemies.teleportEnemy.width = 18;
+  sprites.enemies.teleportEnemy.height = 18;
+  let teleCtx = sprites.enemies.teleportEnemy.getContext('2d');
+  teleCtx.fillStyle = "#9932CC"; // ダークオーキッド
+  teleCtx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+    const outerX = 9 + 8 * Math.cos(angle);
+    const outerY = 9 + 8 * Math.sin(angle);
+    teleCtx.lineTo(outerX, outerY);
+    const innerAngle = angle + Math.PI / 5;
+    const innerX = 9 + 3 * Math.cos(innerAngle);
+    const innerY = 9 + 3 * Math.sin(innerAngle);
+    teleCtx.lineTo(innerX, innerY);
+  }
+  teleCtx.closePath();
+  teleCtx.fill();
+
   // 弾のスプライト（レインボーグラデーション）
   sprites.bullets = document.createElement('canvas');
   sprites.bullets.width = 5;
@@ -278,20 +342,60 @@ function loadGameAssets() {
     sprites.powerups[type.name].width = 20;
     sprites.powerups[type.name].height = 20;
     let puCtx = sprites.powerups[type.name].getContext('2d');
-    puCtx.fillStyle = type.color;
-    puCtx.beginPath();
-    for (let i = 0; i < 5; i++) {
-      const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
-      const outerX = 10 + 10 * Math.cos(angle);
-      const outerY = 10 + 10 * Math.sin(angle);
-      puCtx.lineTo(outerX, outerY);
-      const innerAngle = angle + Math.PI / 5;
-      const innerX = 10 + 4 * Math.cos(innerAngle);
-      const innerY = 10 + 4 * Math.sin(innerAngle);
-      puCtx.lineTo(innerX, innerY);
+    
+    // パワーアップの種類に応じて形を変える
+    if (type.name === "laserBeam") {
+      // レーザービーム：ダイアモンド形
+      puCtx.fillStyle = type.color;
+      puCtx.beginPath();
+      puCtx.moveTo(10, 2);
+      puCtx.lineTo(18, 10);
+      puCtx.lineTo(10, 18);
+      puCtx.lineTo(2, 10);
+      puCtx.closePath();
+      puCtx.fill();
+    } else if (type.name === "timeSlow") {
+      // タイムスロー：時計形
+      puCtx.fillStyle = type.color;
+      puCtx.beginPath();
+      puCtx.arc(10, 10, 8, 0, Math.PI * 2);
+      puCtx.fill();
+      puCtx.strokeStyle = "#ffffff";
+      puCtx.lineWidth = 2;
+      puCtx.beginPath();
+      puCtx.moveTo(10, 10);
+      puCtx.lineTo(10, 5);
+      puCtx.moveTo(10, 10);
+      puCtx.lineTo(13, 10);
+      puCtx.stroke();
+    } else if (type.name === "doubleScore") {
+      // ダブルスコア：コイン形
+      puCtx.fillStyle = type.color;
+      puCtx.beginPath();
+      puCtx.arc(10, 10, 8, 0, Math.PI * 2);
+      puCtx.fill();
+      puCtx.fillStyle = "#ffffff";
+      puCtx.font = "bold 12px Arial";
+      puCtx.textAlign = "center";
+      puCtx.fillText("×2", 10, 13);
+    } else {
+      // 既存のパワーアップ：星形
+      puCtx.fillStyle = type.color;
+      puCtx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+        const outerX = 10 + 10 * Math.cos(angle);
+        const outerY = 10 + 10 * Math.sin(angle);
+        puCtx.lineTo(outerX, outerY);
+        const innerAngle = angle + Math.PI / 5;
+        const innerX = 10 + 4 * Math.cos(innerAngle);
+        const innerY = 10 + 4 * Math.sin(innerAngle);
+        puCtx.lineTo(innerX, innerY);
+      }
+      puCtx.closePath();
+      puCtx.fill();
     }
-    puCtx.closePath();
-    puCtx.fill();
+    
     puCtx.fillStyle = "#ffffff";
     puCtx.beginPath();
     puCtx.arc(10, 10, 3, 0, Math.PI * 2);
@@ -578,6 +682,9 @@ function initGame() {
   invincibleTimer = 0;
   playerPowerupType = null;
   powerupTimer = 0;
+  timeSlowActive = false;
+  doubleScoreActive = false;
+  gameSpeedMultiplier = 1;
   
   // ボス関連をリセット
   bossSpawned = false;
@@ -604,12 +711,12 @@ function initGame() {
 function drawHUD() {
   // HUD情報の背景
   ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-  ctx.fillRect(10, 10, 150, 70);
+  ctx.fillRect(10, 10, 150, 90);
   
   // 枠線
   ctx.strokeStyle = "#4a5eff";
   ctx.lineWidth = 1;
-  ctx.strokeRect(10, 10, 150, 70);
+  ctx.strokeRect(10, 10, 150, 90);
   
   // テキスト
   ctx.fillStyle = "#ffffff";
@@ -617,6 +724,21 @@ function drawHUD() {
   ctx.fillText(`スコア: ${score}`, 20, 30);
   ctx.fillText(`残機: ${lives}`, 20, 50);
   ctx.fillText(`レベル: ${level}`, 20, 70);
+  
+  // パワーアップ状態表示
+  if (playerPowerupType) {
+    const timeLeft = Math.ceil(powerupTimer / 60);
+    ctx.fillStyle = "#ffff00";
+    ctx.font = "12px Arial";
+    let powerupName = playerPowerupType;
+    if (playerPowerupType === "rapidFire") powerupName = "連射";
+    else if (playerPowerupType === "wideShot") powerupName = "ワイド";
+    else if (playerPowerupType === "shield") powerupName = "シールド";
+    else if (playerPowerupType === "laserBeam") powerupName = "レーザー";
+    else if (playerPowerupType === "timeSlow") powerupName = "スロー";
+    else if (playerPowerupType === "doubleScore") powerupName = "2倍";
+    ctx.fillText(`${powerupName}:${timeLeft}s`, 20, 90);
+  }
 }
 
 // タッチエリア表示（スマホ向け）
@@ -796,15 +918,32 @@ function shoot() {
   if (!player || gameOver || gameClear || gamePaused) return;
   const maxBullets = playerPowerupType === "rapidFire" ? 100 : 5;
   if (bullets.length < maxBullets) {
-    bullets.push({
-      x: player.x + player.width / 2 - 2.5,
-      y: player.y,
-      width: 5,
-      height: 10,
-      speed: 7,
-      power: 1,
-      dx: 0
-    });
+    if (playerPowerupType === "laserBeam") {
+      // 貫通レーザー
+      bullets.push({
+        x: player.x + player.width / 2 - 2.5,
+        y: player.y,
+        width: 5,
+        height: canvas.height, // 画面全体を貫通
+        speed: 0, // 瞬間的
+        power: 1,
+        dx: 0,
+        isLaser: true,
+        laserLife: 10 // 10フレーム表示
+      });
+    } else {
+      // 通常弾
+      bullets.push({
+        x: player.x + player.width / 2 - 2.5,
+        y: player.y,
+        width: 5,
+        height: 10,
+        speed: 7,
+        power: 1,
+        dx: 0
+      });
+    }
+    
     if (playerPowerupType === "wideShot") {
       bullets.push({
         x: player.x + 5,
@@ -831,13 +970,29 @@ function shoot() {
 function updateBullets() {
   for (let i = bullets.length - 1; i >= 0; i--) {
     let bullet = bullets[i];
-    bullet.x += bullet.dx || 0;
-    bullet.y -= bullet.speed;
-    if (bullet.y < 0) {
-      bullets.splice(i, 1);
-      continue;
+    
+    if (bullet.isLaser) {
+      // レーザーの処理
+      bullet.laserLife--;
+      if (bullet.laserLife <= 0) {
+        bullets.splice(i, 1);
+        continue;
+      }
+      // レーザーの描画（縦に長い線）
+      ctx.fillStyle = "#ff00ff";
+      ctx.fillRect(bullet.x, 0, bullet.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(bullet.x + 1, 0, bullet.width - 2, canvas.height);
+    } else {
+      // 通常弾の処理
+      bullet.x += (bullet.dx || 0) * gameSpeedMultiplier;
+      bullet.y -= bullet.speed * gameSpeedMultiplier;
+      if (bullet.y < 0) {
+        bullets.splice(i, 1);
+        continue;
+      }
+      ctx.drawImage(sprites.bullets, bullet.x, bullet.y, bullet.width, bullet.height);
     }
-    ctx.drawImage(sprites.bullets, bullet.x, bullet.y, bullet.width, bullet.height);
   }
 }
 
@@ -907,14 +1062,20 @@ function startEnemyGeneration() {
     const bossExists = enemies.some(enemy => enemy.type === "boss");
     
     const rand = Math.random();
-    if (rand < 0.15) {
-      spawnEnemy("gray");   // 15%の確率でグレー
+    if (rand < 0.1) {
+      spawnEnemy("gray");   // 10%の確率でグレー
+    } else if (rand < 0.3) {
+      spawnEnemy("orange"); // 20%でライムUFO
     } else if (rand < 0.45) {
-      spawnEnemy("orange"); // 30%でライムUFO（2倍に増加）
-    } else if (rand < 0.65) {
-      spawnEnemy("zigzag"); // 20%でジグザグ
-    } else if (rand < 0.85) {
-      spawnEnemy("fast");   // 20%で高速敵
+      spawnEnemy("zigzag"); // 15%でジグザグ
+    } else if (rand < 0.6) {
+      spawnEnemy("fast");   // 15%で高速敵
+    } else if (rand < 0.7) {
+      spawnEnemy("shieldEnemy"); // 10%でシールド敵
+    } else if (rand < 0.8) {
+      spawnEnemy("splittingEnemy"); // 10%で分裂敵
+    } else if (rand < 0.9) {
+      spawnEnemy("teleportEnemy"); // 10%でテレポート敵
     } else if (!bossSpawned && !bossExists) {
       spawnEnemy("boss");   // ボス敵（1回のみ、画面上にいない場合のみ）
       bossSpawned = true;   // ボス出現フラグを立てる
@@ -933,6 +1094,12 @@ function spawnEnemy(type) {
   } else if (type === "fast") {
     width = 15;
     height = 15;
+  } else if (type === "shieldEnemy") {
+    width = 25;
+    height = 25;
+  } else if (type === "splittingEnemy" || type === "teleportEnemy") {
+    width = 18;
+    height = 18;
   } else {
     width = 20;
     height = 20;
@@ -990,6 +1157,27 @@ function spawnEnemy(type) {
     enemy.score = 20;
     enemy.zigzagSpeed = 3;
     enemy.startX = x;
+  } else if (type === "shieldEnemy") {
+    enemy.hp = 3; // シールドで保護
+    enemy.speed = 1 + Math.random() * 0.5;
+    enemy.score = 15;
+    enemy.shieldActive = true;
+    enemy.canShoot = true;
+    enemy.shootInterval = 150 + Math.floor(Math.random() * 50);
+  } else if (type === "splittingEnemy") {
+    enemy.hp = 2;
+    enemy.speed = 2 + Math.random() * 1;
+    enemy.score = 25;
+    enemy.canSplit = true;
+    enemy.splitCount = 0;
+  } else if (type === "teleportEnemy") {
+    enemy.hp = 1;
+    enemy.speed = 1.5 + Math.random() * 1;
+    enemy.score = 30;
+    enemy.teleportTimer = 180 + Math.floor(Math.random() * 120);
+    enemy.teleportCooldown = 0;
+    enemy.canShoot = true;
+    enemy.shootInterval = 200 + Math.floor(Math.random() * 100);
   }
   
   enemies.push(enemy);
@@ -1030,9 +1218,37 @@ function updateEnemies() {
         enemy.y = Math.random() * (canvas.height * 0.3) + 50; // 新しいY座標
       }
     } else if (enemy.type === "fast") {
-      enemy.y += enemy.speed;
+      enemy.y += enemy.speed * gameSpeedMultiplier;
       // 高速敵は左右にジグザグ移動
       enemy.x = enemy.startX + Math.sin(enemy.y * 0.1) * 40;
+    } else if (enemy.type === "shieldEnemy") {
+      enemy.y += enemy.speed * gameSpeedMultiplier;
+      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0 && enemy.y < player.y) {
+        spawnEnemyBullet(enemy);
+      }
+    } else if (enemy.type === "splittingEnemy") {
+      enemy.y += enemy.speed * gameSpeedMultiplier;
+    } else if (enemy.type === "teleportEnemy") {
+      enemy.y += enemy.speed * gameSpeedMultiplier;
+      enemy.teleportCooldown--;
+      
+      // テレポート処理
+      if (enemy.teleportCooldown <= 0 && enemy.frameCount % enemy.teleportTimer === 0) {
+        // パーティクルエフェクト
+        createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#9932CC", 8);
+        // 新しい位置にテレポート
+        enemy.x = Math.random() * (canvas.width - enemy.width);
+        enemy.y = Math.max(50, enemy.y - 100 - Math.random() * 100);
+        enemy.teleportCooldown = 60; // 1秒のクールダウン
+        // テレポート後のエフェクト
+        setTimeout(() => {
+          createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#9932CC", 8);
+        }, 100);
+      }
+      
+      if (enemy.canShoot && enemy.frameCount % enemy.shootInterval === 0 && enemy.y < player.y) {
+        spawnEnemyBullet(enemy);
+      }
     }
     
     if (enemy.y > canvas.height) {
@@ -1041,8 +1257,25 @@ function updateEnemies() {
     }
     
     // 敵の描画
-    if (enemy.type === "gray" || enemy.type === "orange" || enemy.type === "boss" || enemy.type === "fast") {
+    if (enemy.type === "gray" || enemy.type === "orange" || enemy.type === "boss" || enemy.type === "fast" || 
+        enemy.type === "shieldEnemy" || enemy.type === "splittingEnemy" || enemy.type === "teleportEnemy") {
       ctx.drawImage(sprites.enemies[enemy.type], enemy.x, enemy.y, enemy.width, enemy.height);
+      
+      // シールド敵のシールド表示
+      if (enemy.type === "shieldEnemy" && enemy.shieldActive) {
+        ctx.strokeStyle = "#00ff00";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width / 2 + 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      // テレポート敵の点滅効果
+      if (enemy.type === "teleportEnemy" && enemy.teleportCooldown > 0) {
+        ctx.globalAlpha = 0.5 + 0.3 * Math.sin(enemy.frameCount * 0.3);
+        ctx.drawImage(sprites.enemies[enemy.type], enemy.x, enemy.y, enemy.width, enemy.height);
+        ctx.globalAlpha = 1;
+      }
     } else if (enemy.type === "zigzag") {
       ctx.fillStyle = enemy.currentColor;
       ctx.beginPath();
@@ -1096,6 +1329,13 @@ function updatePowerups() {
   if (playerPowerupType) {
     powerupTimer--;
     if (powerupTimer <= 0) {
+      // パワーアップ終了時の処理
+      if (playerPowerupType === "timeSlow") {
+        timeSlowActive = false;
+        gameSpeedMultiplier = 1;
+      } else if (playerPowerupType === "doubleScore") {
+        doubleScoreActive = false;
+      }
       playerPowerupType = null;
     }
   }
@@ -1258,11 +1498,45 @@ function checkCollisions() {
         
         // 通常の敵の処理
         bullets.splice(i, 1);
+        
+        // シールド敵の特別処理
+        if (enemy.type === "shieldEnemy" && enemy.shieldActive && enemy.hp > 1) {
+          enemy.hp--;
+          if (enemy.hp === 1) {
+            enemy.shieldActive = false; // シールド破壊
+            createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#00ff00", 5);
+          }
+          break;
+        }
+        
         enemy.hp--;
         if (enemy.hp <= 0) {
           // 敵のHPが0になったら敵を消す
+          let scoreGain = enemy.score || 10;
+          if (doubleScoreActive) scoreGain *= 2; // ダブルスコア適用
+          
+          // 分裂敵の分裂処理
+          if (enemy.type === "splittingEnemy" && enemy.canSplit && enemy.splitCount < 1) {
+            // 2つに分裂
+            for (let k = 0; k < 2; k++) {
+              enemies.push({
+                x: enemy.x + (k === 0 ? -10 : 10),
+                y: enemy.y,
+                width: enemy.width * 0.7,
+                height: enemy.height * 0.7,
+                type: "splittingEnemy",
+                hp: 1,
+                speed: enemy.speed + 1,
+                score: Math.floor(enemy.score / 2),
+                canSplit: false,
+                splitCount: enemy.splitCount + 1,
+                frameCount: 0
+              });
+            }
+          }
+          
           enemies.splice(j, 1);
-          score += enemy.score || 10;
+          score += scoreGain;
           totalEnemiesDefeated++;
           // パーティクルを生成
           createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 
@@ -1280,6 +1554,15 @@ function checkCollisions() {
       // パワーアップを適用
       playerPowerupType = powerup.type;
       powerupTimer = 600; // 約10秒間有効
+      
+      // 特別なパワーアップの処理
+      if (powerup.type === "timeSlow") {
+        timeSlowActive = true;
+        gameSpeedMultiplier = 0.5; // 半分の速度
+      } else if (powerup.type === "doubleScore") {
+        doubleScoreActive = true;
+      }
+      
       let pu = powerupTypes.find(p => p.name === powerup.type);
       if (pu) {
         showPowerupNotification(pu.text);
