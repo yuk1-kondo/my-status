@@ -527,6 +527,7 @@ function adjustInstructionsForMobile() {
     if (h2) {
       h2.style.fontSize = titleSize + 'px';
       h2.style.marginBottom = '8px';
+      h2.style.lineHeight = '1.2'; // 2行対応
     }
     
     const lis = instructions.querySelectorAll('li');

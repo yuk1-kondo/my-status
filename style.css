@@ -67,7 +67,7 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: linear-gradient(to bottom, #05071b, #0d1331, #1a0033); /* ゲーム画面と同じ宇宙風グラデーション */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -78,9 +78,9 @@ canvas {
 
 /* 説明テキスト */
 .instructions {
-  background-color: rgba(0, 0, 40, 0.7);
+  background: linear-gradient(135deg, rgba(26, 0, 51, 0.9), rgba(13, 19, 49, 0.9)); /* 宇宙風グラデーション */
   border: 2px solid #4a5eff;
-  border-radius: 10px;
+  border-radius: 15px;
   padding: 20px;
   margin: 0 10px;
   max-width: 600px;
@@ -88,27 +88,55 @@ canvas {
   max-height: 70vh;
   overflow-y: auto;
   margin-bottom: 20px;
+  box-shadow: 0 0 20px rgba(74, 94, 255, 0.3); /* グロー効果 */
+  -webkit-backdrop-filter: blur(5px); /* ぼかし効果（Safari対応） */
+  backdrop-filter: blur(5px); /* ぼかし効果 */
+  color: #ffffff; /* テキストを白色に */
+}
+
+.instructions ul {
+  color: #e0e0e0; /* リストアイテムを薄いグレーに */
+}
+
+.instructions li {
+  margin-bottom: 8px;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.3); /* 軽いグロー効果 */
+}
+
+.instructions p {
+  color: #ffffff;
+  text-align: center;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
 .instructions h2 {
   text-align: center;
   color: #4a5eff;
   margin-top: 0;
+  font-size: 28px;
+  text-shadow: 0 0 10px rgba(74, 94, 255, 0.5); /* グロー効果 */
+  background: linear-gradient(45deg, #4a5eff, #00ffff, #ff69b4); /* レインボーグラデーション */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
 }
 
 /* ボタン */
 #startBtn, #restartBtn, #gameOverRestartBtn {
-  background: linear-gradient(to bottom, #4a5eff, #2233cc);
+  background: linear-gradient(45deg, #4a5eff, #2233cc, #8B00FF); /* 紫のグラデーション */
   color: white;
   border: none;
   padding: 15px 30px;
   font-size: 24px;
-  border-radius: 10px;
+  border-radius: 15px;
   cursor: pointer;
-  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(74, 94, 255, 0.4); /* グロー効果 */
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
   font-weight: bold;
-  box-shadow: 0 0 15px rgba(74, 94, 255, 0.5);
-  transition: all 0.2s;
+  margin-bottom: 20px;
 }
 
 #startBtn:hover, #restartBtn:hover, #gameOverRestartBtn:hover {
